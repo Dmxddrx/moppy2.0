@@ -1,0 +1,35 @@
+# Build output directories
+Debug/
+Release/
+build/
+
+# Eclipse/STM32CubeIDE user-specific settings
+.settings/
+*.launch
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+*.su
+*.d
+
+# Executables and Binaries
+*.elf
+*.bin
+*.hex
+*.out
+*.exe
+
+# Map files
+*.map
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

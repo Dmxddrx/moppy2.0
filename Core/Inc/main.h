@@ -101,6 +101,7 @@ void Error_Handler(void);
 #define ENC2_B_GPIO_Port GPIOC
 #define MSD_RPM_Pin GPIO_PIN_0
 #define MSD_RPM_GPIO_Port GPIOD
+#define MSD_RPM_EXTI_IRQn EXTI0_IRQn
 #define MD1_STBY_Pin GPIO_PIN_2
 #define MD1_STBY_GPIO_Port GPIOD
 #define M5_AIN1_Pin GPIO_PIN_5

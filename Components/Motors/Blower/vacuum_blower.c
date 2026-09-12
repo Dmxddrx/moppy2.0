@@ -53,17 +53,3 @@ uint32_t VacuumBlower_GetRPM(void)
     return rpm;
 }
 
-/**
-  * @brief  EXTI line detection callback.
-  *         This overrides the weakly defined HAL function to catch the RPM pulses.
-  * @param  GPIO_Pin Specifies the pins connected EXTI line
-  * @retval None
-  */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-    // Check if the interrupt came from the MSD_RPM pin (PD0)[cite: 8, 10]
-    if (GPIO_Pin == MSD_RPM_Pin)
-    {
-        blower_pulse_count++;
-    }
-}

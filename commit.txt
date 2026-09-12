@@ -1,0 +1,6 @@
+Initial commit: Moppy 2.0 hardware config and core motor drivers
+
+- Configured STM32F407VET6 clock tree for 168MHz core and 21kHz PWM
+- Initialized TIM3 and TIM4 for TB6612FNG driver and blower PWM
+- Initialized TIM1 and TIM8 for hardware quadrature encoders
+- Authored modular drivers for main wheels, side brushes, roller, and vacuum

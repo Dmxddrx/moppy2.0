@@ -49,7 +49,7 @@ void Chassis_Update(void)
     total_distance_cm += (dist_L_cm + dist_R_cm) / 2.0f;
 
     // --- PID SPEED CONTROLLER ---
-    int16_t target_ticks_per_loop = 40;
+    int16_t target_ticks_per_loop = 120;
 
     int16_t error_L = target_ticks_per_loop - delta_L;
     int16_t error_R = target_ticks_per_loop - delta_R;

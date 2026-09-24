@@ -2,6 +2,7 @@
 
 /* I2C1: PB6 (SCL1), PB7 (SDA1) — shared with HMC5883L          */
 extern I2C_HandleTypeDef hi2c1;
+extern IWDG_HandleTypeDef hiwdg;
 
 /* ── Register map ───────────────────────────────────────────────*/
 #define REG_SMPLRT_DIV    0x19
@@ -47,8 +48,12 @@ MPU_Status MPU6050_Check(I2C_HandleTypeDef *hi2c)
 /* ─────────────────────────────────────────────────────────────── */
 void MPU6050_Init(void)
 {
+	HAL_IWDG_Refresh(&hiwdg);
     HAL_Delay(100);
-    WriteReg(REG_PWR_MGMT_1, 0x80);   /* device reset              */
+
+    WriteReg(REG_PWR_MGMT_1, 0x80);
+    HAL_IWDG_Refresh(&hiwdg);/* device reset              */
+
     HAL_Delay(100);
     WriteReg(REG_PWR_MGMT_1, 0x01);   /* clock = PLL gyro X        */
     HAL_Delay(10);
@@ -56,6 +61,8 @@ void MPU6050_Init(void)
     WriteReg(REG_CONFIG,       0x03); /* DLPF_CFG 3 → 44 Hz BW     */
     WriteReg(REG_GYRO_CONFIG,  0x00); /* ±250 °/s                   */
     WriteReg(REG_ACCEL_CONFIG, 0x00); /* ±2 g                       */
+
+    HAL_IWDG_Refresh(&hiwdg);
     HAL_Delay(100);
 
     /* Calibrate gyro on power-up (keep robot stationary!)         */
@@ -86,6 +93,7 @@ void MPU6050_CalibrateGyro(void)
             sum_g[2] += (int16_t)((buf[12] << 8) | buf[13]);
         }
         HAL_Delay(5);
+        HAL_IWDG_Refresh(&hiwdg);
     }
 
     s_accel_bias[0] = (int16_t)(sum_a[0] / N);
@@ -130,4 +138,21 @@ MPU6050_PhysData MPU6050_GetPhysical(const MPU6050_RawData *raw)
     p.gz = (raw->gz - s_gyro_bias[2]) * GYRO_SCALE_DPS;
 
     return p;
+}
+/* ─────────────────────────────────────────────────────────────── */
+HAL_StatusTypeDef MPU6050_ReadRaw_DMA(uint8_t *dma_buf)
+{
+    /* Tells the DMA hardware to fetch 14 bytes in the background */
+    return HAL_I2C_Mem_Read_DMA(&hi2c1, MPU6050_ADDR, REG_ACCEL_XOUT_H, 1, dma_buf, 14);
+}
+
+void MPU6050_ParseDMA(uint8_t *dma_buf, MPU6050_RawData *data)
+{
+    /* Translates the raw bytes after the DMA transfer is complete */
+    data->ax = (int16_t)((dma_buf[0]  << 8) | dma_buf[1]);
+    data->ay = (int16_t)((dma_buf[2]  << 8) | dma_buf[3]);
+    data->az = (int16_t)((dma_buf[4]  << 8) | dma_buf[5]);
+    data->gx = (int16_t)((dma_buf[8]  << 8) | dma_buf[9])  - s_gyro_bias[0];
+    data->gy = (int16_t)((dma_buf[10] << 8) | dma_buf[11]) - s_gyro_bias[1];
+    data->gz = (int16_t)((dma_buf[12] << 8) | dma_buf[13]) - s_gyro_bias[2];
 }

@@ -32,4 +32,6 @@ void              MPU6050_CalibrateGyro(void);   /* call while stationary */
 HAL_StatusTypeDef MPU6050_ReadRaw(MPU6050_RawData *data);
 MPU6050_PhysData  MPU6050_GetPhysical(const MPU6050_RawData *raw);
 
+HAL_StatusTypeDef MPU6050_ReadRaw_DMA(uint8_t *dma_buf);
+void              MPU6050_ParseDMA(uint8_t *dma_buf, MPU6050_RawData *data);
 #endif /* MPU6050_H */

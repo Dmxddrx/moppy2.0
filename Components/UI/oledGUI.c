@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 /* Change this value (0, 1, or 2) to manually switch pages right now. */
-uint8_t current_gui_page = 0;
+uint8_t current_gui_page = 3;
 
 /* ═══════════════════════════════════════════════════════════════ */
 /* PAGE 0: MAIN WHEELS (SPLIT SCREEN UI)                           */
@@ -130,6 +130,52 @@ static void render_page_brushes(void)
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
+/* PAGE 3: IMU & COMPASS CALIBRATION                               */
+/* ═══════════════════════════════════════════════════════════════ */
+static void render_page_sensors(void)
+{
+    char buf[32];
+    extern HMC5883L_RawData current_mag;       //[cite: 12]
+    extern MPU6050_PhysData current_mpu_phys;  //[cite: 14]
+    extern float current_heading;
+
+    OLED_Clear();
+
+    /* 1. Draw UI Framework */
+    OLED_Print(0, 0, " GYRO(deg/s)");
+    OLED_Print(70, 0, "MAG(raw)");
+    OLED_DrawLine(0, 10, 128, 10);
+    OLED_DrawLine(64, 0, 64, 46);
+    OLED_DrawLine(0, 46, 128, 46);
+
+    /* 2. Left Block: MPU6050 Gyroscope Data */
+    snprintf(buf, sizeof(buf), "X:%5.1f", current_mpu_phys.gx);
+    OLED_Print(2, 14, buf);
+
+    snprintf(buf, sizeof(buf), "Y:%5.1f", current_mpu_phys.gy);
+    OLED_Print(2, 24, buf);
+
+    snprintf(buf, sizeof(buf), "Z:%5.1f", current_mpu_phys.gz);
+    OLED_Print(2, 34, buf);
+
+    /* 3. Right Block: HMC5883L Magnetometer Data */
+    snprintf(buf, sizeof(buf), "X:%-5d", current_mag.mx);
+    OLED_Print(68, 14, buf);
+
+    snprintf(buf, sizeof(buf), "Y:%-5d", current_mag.my);
+    OLED_Print(68, 24, buf);
+
+    snprintf(buf, sizeof(buf), "Z:%-5d", current_mag.mz);
+    OLED_Print(68, 34, buf);
+
+    /* 4. Global Heading Footer */
+    snprintf(buf, sizeof(buf), "HEADING: %3.0f deg", current_heading);
+    OLED_Print(10, 52, buf);
+
+    OLED_Update();
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
 /* MASTER ROUTER: Displays the page matching 'current_gui_page'    */
 /* ═══════════════════════════════════════════════════════════════ */
 void render_dashboard_page(void)
@@ -143,8 +189,10 @@ void render_dashboard_page(void)
     else if (current_gui_page == 2) {
         render_page_brushes();
     }
+    else if (current_gui_page == 3) { // <--- NEW: Route to Sensor Page
+        render_page_sensors();
+    }
     else {
-        /* Safety fallback if the variable goes out of bounds */
         current_gui_page = 0;
     }
 }

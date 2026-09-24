@@ -63,8 +63,8 @@ void HMC5883L_ReadRaw(HMC5883L_RawData *data)
 float HMC5883L_GetHeading(float mx, float my)
 {
     /* 1. Hard Iron Calibration (Offsets) */
-    float offset_x = 20.0f; // (mx max + mx min)/2.0f
-    float offset_y = -156.0f; // (my max + my min)/2.0f
+    float offset_x = 0.0f; // (mx max + mx min)/2.0f
+    float offset_y = 0.0f; // (my max + my min)/2.0f
 
     /* 2. Soft Iron Calibration (Scaling) */
     // Note: To find scale, first find the radius (range) of each axis:
@@ -72,8 +72,8 @@ float HMC5883L_GetHeading(float mx, float my)
     // range_y = (Y_max - Y_min) / 2.0f
     // avg_range = (range_x + range_y) / 2.0f
 
-    float scale_x = 0.989f; // avg_range / range_x
-    float scale_y = 1.010f; // avg_range / range_y
+    float scale_x = 0.0f; // avg_range / range_x
+    float scale_y = 0.0f; // avg_range / range_y
 
     /* Step A: Remove Hard Iron distortion (shift to center) */
     float cal_mx = mx - offset_x;
@@ -109,4 +109,18 @@ HMC5883L_SelfTestData HMC5883L_SelfTest(void)
     /* Restore normal operation                                    */
     HMC5883L_Init();
     return result;
+}
+/* ─────────────────────────────────────────────────────────────── */
+HAL_StatusTypeDef HMC5883L_ReadRaw_DMA(uint8_t *dma_buf)
+{
+    /* Tells the DMA hardware to fetch 6 bytes in the background */
+    return HAL_I2C_Mem_Read_DMA(&hi2c1, HMC5883L_ADDR, REG_DATA_XH, 1, dma_buf, 6);
+}
+
+void HMC5883L_ParseDMA(uint8_t *dma_buf, HMC5883L_RawData *data)
+{
+    /* Translates the raw bytes after the DMA transfer is complete */
+    data->mx = (int16_t)((dma_buf[0] << 8) | dma_buf[1]);
+    data->mz = (int16_t)((dma_buf[2] << 8) | dma_buf[3]);
+    data->my = (int16_t)((dma_buf[4] << 8) | dma_buf[5]);
 }

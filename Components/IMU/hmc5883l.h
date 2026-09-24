@@ -29,4 +29,7 @@ HMC5883L_SelfTestData HMC5883L_SelfTest(void);
    Pass tilt-compensated mx2/my2 values from STABLE_Update.      */
 float HMC5883L_GetHeading(float mx, float my);
 
+HAL_StatusTypeDef HMC5883L_ReadRaw_DMA(uint8_t *dma_buf);
+void              HMC5883L_ParseDMA(uint8_t *dma_buf, HMC5883L_RawData *data);
+
 #endif /* HMC5883L_H */

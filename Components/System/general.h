@@ -12,12 +12,11 @@
 #include "roller_brush.h"
 #include "vacuum_blower.h"
 
+/* Include High-Level Controllers */
+#include "chassis_control.h"
+
 extern IWDG_HandleTypeDef hiwdg;
 extern I2C_HandleTypeDef hi2c2;
-
-extern float total_distance_cm;
-extern float total_dist_L_cm;
-extern float total_dist_R_cm;
 
 /* System logic functions */
 void General_Init(void);

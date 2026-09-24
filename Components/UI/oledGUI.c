@@ -1,9 +1,9 @@
 #include "oledGUI.h"
+#include "chassis_control.h"
 #include <stdio.h>
 
 /* Change this value (0, 1, or 2) to manually switch pages right now. */
 uint8_t current_gui_page = 0;
-extern float total_distance_cm;
 
 /* ═══════════════════════════════════════════════════════════════ */
 /* PAGE 0: MAIN WHEELS (SPLIT SCREEN UI)                           */

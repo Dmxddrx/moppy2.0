@@ -40,6 +40,7 @@ void MainWheels_SetLeftSpeed(int16_t speed)
 
 void MainWheels_SetRightSpeed(int16_t speed)
 {
+
     if (speed > 999) speed = 999;
     if (speed < -999) speed = -999;
 
@@ -98,17 +99,31 @@ uint16_t MainWheels_GetRightSpeed(void)
 
 int8_t MainWheels_GetLeftDirection(void)
 {
-    // 1 = Forward, -1 = Backward, 0 = Stopped
-    if (HAL_GPIO_ReadPin(M1_AIN1_GPIO_Port, M1_AIN1_Pin) == GPIO_PIN_SET) return 1;
-    if (HAL_GPIO_ReadPin(M1_AIN2_GPIO_Port, M1_AIN2_Pin) == GPIO_PIN_SET) return -1;
-    return 0;
+    // Check if the physical wheel is currently stopped
+    if (MainWheels_GetLeftSpeed() == 0) {
+        return 0;
+    }
+
+    // Read the hardware direction bit directly from TIM1
+    if (__HAL_TIM_IS_TIM_COUNTING_DOWN(&htim1)) {
+        return -1; // Wheel is spinning backwards
+    } else {
+        return 1;  // Wheel is spinning forwards
+    }
 }
 
 int8_t MainWheels_GetRightDirection(void)
 {
-    if (HAL_GPIO_ReadPin(M2_BIN1_GPIO_Port, M2_BIN1_Pin) == GPIO_PIN_SET) return 1;
-    if (HAL_GPIO_ReadPin(M2_BIN2_GPIO_Port, M2_BIN2_Pin) == GPIO_PIN_SET) return -1;
-    return 0;
+    if (MainWheels_GetRightSpeed() == 0) {
+        return 0;
+    }
+
+    // Read the hardware direction bit directly from TIM8
+    if (__HAL_TIM_IS_TIM_COUNTING_DOWN(&htim8)) {
+        return -1;
+    } else {
+        return 1;
+    }
 }
 
 /* ==================================================================== */
@@ -117,7 +132,7 @@ int8_t MainWheels_GetRightDirection(void)
 
 int16_t MainWheels_GetLeftEncoder(void)
 {
-    return (int16_t)__HAL_TIM_GET_COUNTER(&htim1);
+    return -(int16_t)__HAL_TIM_GET_COUNTER(&htim1);
 }
 
 int16_t MainWheels_GetRightEncoder(void)

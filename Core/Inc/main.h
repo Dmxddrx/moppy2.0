@@ -85,6 +85,10 @@ void Error_Handler(void);
 #define ENC1_A_GPIO_Port GPIOE
 #define ENC1_B_Pin GPIO_PIN_11
 #define ENC1_B_GPIO_Port GPIOE
+#define OLED_SCL_Pin GPIO_PIN_10
+#define OLED_SCL_GPIO_Port GPIOB
+#define OLED_SDA_Pin GPIO_PIN_11
+#define OLED_SDA_GPIO_Port GPIOB
 #define MD2_STBY_Pin GPIO_PIN_8
 #define MD2_STBY_GPIO_Port GPIOD
 #define MD3_STBY_Pin GPIO_PIN_9

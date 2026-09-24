@@ -1,6 +1,6 @@
-Initial commit: Moppy 2.0 hardware config and core motor drivers
+Implement main control loop and resolve watchdog resets
 
-- Configured STM32F407VET6 clock tree for 168MHz core and 21kHz PWM
-- Initialized TIM3 and TIM4 for TB6612FNG driver and blower PWM
-- Initialized TIM1 and TIM8 for hardware quadrature encoders
-- Authored modular drivers for main wheels, side brushes, roller, and vacuum
+- Created System_Loop() in general.c to serve as the primary continuous application loop
+- Exposed IWDG handle in general.h and added HAL_IWDG_Refresh() to prevent the hardware watchdog from constantly resetting the MCU
+- Integrated System_Init() and System_Loop() into the main.c execution flow
+- Forced all motors to maximum forward speed for initial hardware validation

@@ -115,6 +115,7 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   General_Init();
+  //MainWheels_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -123,7 +124,12 @@ int main(void)
   {
 	  General_Run();
 
-
+	  //HAL_IWDG_Refresh(&hiwdg);
+	  //MainWheels_Forward(400);
+	  //SideBrushes_Start(500);
+	  //RollerBrush_Start(500);
+	  //VacuumBlower_SetSpeed(300);
+	  //HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

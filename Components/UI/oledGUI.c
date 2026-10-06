@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 /* Change this value (0, 1, or 2) to manually switch pages right now. */
-uint8_t current_gui_page = 3;
+uint8_t current_gui_page = 1;
 
 /* ═══════════════════════════════════════════════════════════════ */
 /* PAGE 0: MAIN WHEELS (SPLIT SCREEN UI)                           */

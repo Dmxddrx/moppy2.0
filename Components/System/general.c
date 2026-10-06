@@ -171,7 +171,7 @@ void General_Run(void)
         last_ramp_time = current_time;
         if (blower_speed < 800) {
             blower_speed += 10;
-            VacuumBlower_Stop();
+            VacuumBlower_SetSpeed(0);
         }
     }
 }

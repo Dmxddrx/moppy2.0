@@ -2,14 +2,14 @@
 
 void MainWheels_Init(void)
 {
-    // 1. Enable Motor Driver 1 by pulling MD1_STBY high[cite: 11]
+    // 1. Enable Motor Driver 1 by pulling MD1_STBY high
     HAL_GPIO_WritePin(MD1_STBY_GPIO_Port, MD1_STBY_Pin, GPIO_PIN_SET);
 
-    // 2. Start PWM signals for Left (CH1) and Right (CH2) wheels[cite: 11]
+    // 2. Start PWM signals for Right/M2 (CH1) and Left/M1 (CH2)
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
 
-    // 3. Start Hardware Encoders on all channels[cite: 11]
+    // 3. Start Hardware Encoders in Interrupt Mode for 32/64-bit odometry tracking
     HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
     HAL_TIM_Encoder_Start(&htim8, TIM_CHANNEL_ALL);
 }
@@ -35,7 +35,9 @@ void MainWheels_SetLeftSpeed(int16_t speed)
         HAL_GPIO_WritePin(M1_AIN1_GPIO_Port, M1_AIN1_Pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(M1_AIN2_GPIO_Port, M1_AIN2_Pin, GPIO_PIN_RESET);
     }
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, abs(speed));
+
+    // Left motor (M1) is mapped to TIM3 Channel 2
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, abs(speed));
 }
 
 void MainWheels_SetRightSpeed(int16_t speed)
@@ -56,7 +58,9 @@ void MainWheels_SetRightSpeed(int16_t speed)
         HAL_GPIO_WritePin(M2_BIN1_GPIO_Port, M2_BIN1_Pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(M2_BIN2_GPIO_Port, M2_BIN2_Pin, GPIO_PIN_RESET);
     }
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, abs(speed));
+
+    // Right motor (M2) is mapped to TIM3 Channel 1
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, abs(speed));
 }
 
 /* ==================================================================== */
@@ -71,7 +75,6 @@ void MainWheels_Forward(uint16_t speed)
 
 void MainWheels_Backward(uint16_t speed)
 {
-    // Negate the speed to reverse both wheels automatically
     MainWheels_SetLeftSpeed(-(int16_t)speed);
     MainWheels_SetRightSpeed(-(int16_t)speed);
 }
@@ -88,41 +91,49 @@ void MainWheels_Stop(void)
 
 uint16_t MainWheels_GetLeftSpeed(void)
 {
-    // Read the current PWM duty cycle directly from the timer register
-    return __HAL_TIM_GET_COMPARE(&htim3, TIM_CHANNEL_1);
+    return __HAL_TIM_GET_COMPARE(&htim3, TIM_CHANNEL_2);
 }
 
 uint16_t MainWheels_GetRightSpeed(void)
 {
-    return __HAL_TIM_GET_COMPARE(&htim3, TIM_CHANNEL_2);
+    return __HAL_TIM_GET_COMPARE(&htim3, TIM_CHANNEL_1);
 }
 
 int8_t MainWheels_GetLeftDirection(void)
 {
-    // Check if the physical wheel is currently stopped
-    if (MainWheels_GetLeftSpeed() == 0) {
-        return 0;
+    static int16_t last_enc = 0;
+    int16_t current_enc = MainWheels_GetLeftEncoder();
+
+    // If the encoder hasn't changed since the last check, it's stopped
+    if (current_enc == last_enc) {
+        return 0; // STP
     }
 
-    // Read the hardware direction bit directly from TIM1
+    last_enc = current_enc;
+
+    // If it is moving, check the hardware timer's internal direction flag
     if (__HAL_TIM_IS_TIM_COUNTING_DOWN(&htim1)) {
-        return -1; // Wheel is spinning backwards
+        return -1; // REV
     } else {
-        return 1;  // Wheel is spinning forwards
+        return 1;  // FWD
     }
 }
 
 int8_t MainWheels_GetRightDirection(void)
 {
-    if (MainWheels_GetRightSpeed() == 0) {
-        return 0;
+    static int16_t last_enc = 0;
+    int16_t current_enc = MainWheels_GetRightEncoder();
+
+    if (current_enc == last_enc) {
+        return 0; // STP
     }
 
-    // Read the hardware direction bit directly from TIM8
+    last_enc = current_enc;
+
     if (__HAL_TIM_IS_TIM_COUNTING_DOWN(&htim8)) {
-        return -1;
+        return -1; // REV
     } else {
-        return 1;
+        return 1;  // FWD
     }
 }
 
@@ -145,3 +156,4 @@ void MainWheels_ResetEncoders(void)
     __HAL_TIM_SET_COUNTER(&htim1, 0);
     __HAL_TIM_SET_COUNTER(&htim8, 0);
 }
+

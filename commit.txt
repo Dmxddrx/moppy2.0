@@ -1,6 +1,18 @@
-Implement main control loop and resolve watchdog resets
+feat(chassis, ui): implement brush soft-start, OLED brush dashboard, and optimize encoders
 
-- Created System_Loop() in general.c to serve as the primary continuous application loop
-- Exposed IWDG handle in general.h and added HAL_IWDG_Refresh() to prevent the hardware watchdog from constantly resetting the MCU
-- Integrated System_Init() and System_Loop() into the main.c execution flow
-- Forced all motors to maximum forward speed for initial hardware validation
+This commit syncs the firmware with the new Moppy 2.0 hardware layout, 
+adds non-blocking motor control, and stabilizes odometry readings.
+
+Encoder & Odometry Updates:
+- Migrated from 32-bit interrupt-based odometry to 16-bit polling delta math (HAL_TIM_Encoder_Start), eliminating race conditions and CPU overhead.
+- Enabled STM32 hardware input filters (Level 10) on TIM1 and TIM8 to reject EMI and fix "phantom tick" floating ground issues.
+
+Brush Motor Drivers (Side & Roller):
+- Remapped Side Brushes (M3, M4) to TIM3 (CH3 PB0 / CH4 PB1) and Roller Brush (M5) to TIM4 (CH4 PD15).
+- Implemented non-blocking soft-start state machines (`_Update` functions) evaluated every 10ms to ramp PWM duty cycles and prevent high inrush currents.
+- Modified `_Start` functions to set target speeds rather than blocking/jumping directly to max PWM.
+- Added `_GetSpeed()` getter functions to read real-time PWM registers.
+
+OLED GUI & General Loop:
+- Created `render_page_brushes()` on Page 1 to display real-time ON/OFF state and PWM duty cycles for M3, M4, and M5.
+- Integrated the non-blocking brush update functions into the main `General_Run()` deterministic execution loop.

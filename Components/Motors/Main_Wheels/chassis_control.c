@@ -1,13 +1,19 @@
 #include "chassis_control.h"
 
-// Odometry and PID State Variables
+// Global Odometry Variables
 float total_distance_cm = 0.0f;
-float total_dist_L_cm = 0.0f;
-float total_dist_R_cm = 0.0f;
+float total_dist_L_cm   = 0.0f;
+float total_dist_R_cm   = 0.0f;
 
+// Target setpoints (in encoder ticks per PID update loop)
+static int16_t target_ticks_L = 0;
+static int16_t target_ticks_R = 0;
+
+// Encoder Tracking State
 static int16_t last_enc_L = 0;
 static int16_t last_enc_R = 0;
 
+// PID Controller State
 static float integral_L = 0.0f, integral_R = 0.0f;
 static int16_t last_error_L = 0, last_error_R = 0;
 
@@ -22,10 +28,32 @@ const float Kd = 0.5f;
 
 void Chassis_Init(void)
 {
-    // Continuously sync the baseline encoders while the robot is disarmed
-    // so the PID loop doesn't jerk if the wheels were moved by hand.
+    // 1. Synchronize initial encoder baselines
     last_enc_L = MainWheels_GetLeftEncoder();
     last_enc_R = MainWheels_GetRightEncoder();
+
+    // 2. Reset PID controller states
+    integral_L = 0.0f;
+    integral_R = 0.0f;
+    last_error_L = 0;
+    last_error_R = 0;
+
+    // 3. Reset setpoints
+    target_ticks_L = 0;
+    target_ticks_R = 0;
+}
+
+void Chassis_SetTargetSpeed(int16_t left_ticks_per_loop, int16_t right_ticks_per_loop)
+{
+    target_ticks_L = left_ticks_per_loop;
+    target_ticks_R = right_ticks_per_loop;
+}
+
+void Chassis_ResetOdometry(void)
+{
+    total_distance_cm = 0.0f;
+    total_dist_L_cm   = 0.0f;
+    total_dist_R_cm   = 0.0f;
 }
 
 void Chassis_Update(void)
@@ -34,6 +62,7 @@ void Chassis_Update(void)
     int16_t current_enc_L = MainWheels_GetLeftEncoder();
     int16_t current_enc_R = MainWheels_GetRightEncoder();
 
+    // 16-bit signed subtraction handles counter overflow/underflow automatically
     int16_t delta_L = current_enc_L - last_enc_L;
     int16_t delta_R = current_enc_R - last_enc_R;
 
@@ -44,32 +73,35 @@ void Chassis_Update(void)
     float dist_L_cm = ((float)delta_L / TICKS_PER_REVOLUTION) * WHEEL_CIRCUMFERENCE_CM;
     float dist_R_cm = ((float)delta_R / TICKS_PER_REVOLUTION) * WHEEL_CIRCUMFERENCE_CM;
 
-    total_dist_L_cm += dist_L_cm;
-    total_dist_R_cm += dist_R_cm;
+    total_dist_L_cm   += dist_L_cm;
+    total_dist_R_cm   += dist_R_cm;
     total_distance_cm += (dist_L_cm + dist_R_cm) / 2.0f;
 
     // --- PID SPEED CONTROLLER ---
-    int16_t target_ticks_per_loop = 120;
+    int16_t error_L = target_ticks_L - delta_L;
+    int16_t error_R = target_ticks_R - delta_R;
 
-    int16_t error_L = target_ticks_per_loop - delta_L;
-    int16_t error_R = target_ticks_per_loop - delta_R;
-
+    // Accumulate integral with anti-windup clamping
     integral_L += error_L;
     integral_R += error_R;
-    if (integral_L > 1000) integral_L = 1000; else if (integral_L < -1000) integral_L = -1000;
-    if (integral_R > 1000) integral_R = 1000; else if (integral_R < -1000) integral_R = -1000;
+    if (integral_L > 1000.0f)  integral_L = 1000.0f;  else if (integral_L < -1000.0f) integral_L = -1000.0f;
+    if (integral_R > 1000.0f)  integral_R = 1000.0f;  else if (integral_R < -1000.0f) integral_R = -1000.0f;
 
+    // Derivative calculation
     int16_t deriv_L = error_L - last_error_L;
     int16_t deriv_R = error_R - last_error_R;
     last_error_L = error_L;
     last_error_R = error_R;
 
+    // Compute PID output
     int16_t pwm_L = (int16_t)((Kp * error_L) + (Ki * integral_L) + (Kd * deriv_L));
     int16_t pwm_R = (int16_t)((Kp * error_R) + (Ki * integral_R) + (Kd * deriv_R));
 
-    if (pwm_L > 999) pwm_L = 999; else if (pwm_L < 0) pwm_L = 0;
-    if (pwm_R > 999) pwm_R = 999; else if (pwm_R < 0) pwm_R = 0;
+    // Clamp output to full signed motor driver range (-999 to +999)
+    if (pwm_L > 999)  pwm_L = 999;  else if (pwm_L < -999) pwm_L = -999;
+    if (pwm_R > 999)  pwm_R = 999;  else if (pwm_R < -999) pwm_R = -999;
 
+    // Apply motor speeds
     MainWheels_SetLeftSpeed(pwm_L);
     MainWheels_SetRightSpeed(pwm_R);
 }

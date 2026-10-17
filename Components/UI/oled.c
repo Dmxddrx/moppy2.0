@@ -33,6 +33,11 @@ static void OLED_RecoverBus(void)
         HAL_Delay(1);
     }
 
+    gpio.Mode = GPIO_MODE_AF_OD;
+    gpio.Alternate = GPIO_AF4_I2C1; // Verify AF index for your specific STM32F4 line
+    HAL_GPIO_Init(OLED_SCL_GPIO_Port, &gpio);
+    HAL_I2C_Init(oled_i2c);
+
     /* Step 3 — reinit I2C peripheral */
     HAL_I2C_Init(oled_i2c);
     HAL_Delay(10);
@@ -43,6 +48,7 @@ static void OLED_RecoverBus(void)
 
 void OLED_Init(I2C_HandleTypeDef *hi2c)
 {
+	i2c_oled_I2C_SetHandle(hi2c);
     oled_i2c = hi2c;
     HAL_Delay(50);         /* let display power rail stabilise */
     I2C_OLED_Init();

@@ -25,7 +25,7 @@
  */
 #include "i2c_oled.h"
 
-extern I2C_HandleTypeDef hi2c2;
+extern I2C_HandleTypeDef hi2c1;
 /* Write command */
 #define I2C_OLED_WRITECOMMAND(command)      i2c_oled_I2C_Write(I2C_OLED_I2C_ADDR, 0x00, (command))
 /* Write data */
@@ -158,11 +158,11 @@ void I2C_OLED_DrawBitmap(int16_t x, int16_t y, const unsigned char* bitmap, int1
 }
 
 
-static I2C_HandleTypeDef *i2c_oled_hi2c = NULL;
+static I2C_HandleTypeDef *i2c_oled_hi2c1 = NULL;
 
-void i2c_oled_I2C_SetHandle(I2C_HandleTypeDef *hi2c)
+void i2c_oled_I2C_SetHandle(I2C_HandleTypeDef *hi2c1)
 {
-    i2c_oled_hi2c = hi2c;
+    i2c_oled_hi2c1 = hi2c1;
 }
 
 
@@ -172,7 +172,7 @@ uint8_t I2C_OLED_Init(void) {
 	i2c_oled_I2C_Init();
 
 	/* Check if LCD connected to I2C */
-	if (HAL_I2C_IsDeviceReady(&hi2c2, I2C_OLED_I2C_ADDR, 1, 20000) != HAL_OK) {
+	if (HAL_I2C_IsDeviceReady(&hi2c1, I2C_OLED_I2C_ADDR, 1, 20000) != HAL_OK) {
 		/* Return false */
 		return 0;
 	}
@@ -249,7 +249,7 @@ void I2C_OLED_UpdateScreen(void) {
     /* 3. Blast the ENTIRE 1,024-byte buffer in the background using DMA!
        - 0x40 is the OLED control byte meaning "Display Data"
        - 1 is the memory address size (I2C_MEMADD_SIZE_8BIT) */
-    HAL_I2C_Mem_Write_DMA(&hi2c2, I2C_OLED_I2C_ADDR, 0x40, 1, I2C_OLED_Buffer, sizeof(I2C_OLED_Buffer));
+    HAL_I2C_Mem_Write_DMA(&hi2c1, I2C_OLED_I2C_ADDR, 0x40, 1, I2C_OLED_Buffer, sizeof(I2C_OLED_Buffer));
 }
 
 void I2C_OLED_ToggleInvert(void) {
@@ -634,7 +634,7 @@ void i2c_oled_I2C_Init() {
 	uint32_t p = 250000;
 	while(p>0)
 		p--;
-	//HAL_I2C_DeInit(&hi2c2);
+	//HAL_I2C_DeInit(&hi2c1);
 	//p = 250000;
 	//while(p>0)
 	//	p--;
@@ -647,7 +647,7 @@ dt[0] = reg;
 uint8_t i;
 for(i = 0; i < count; i++)
 dt[i+1] = data[i];
-HAL_I2C_Master_Transmit(&hi2c2, address, dt, count+1, 10);
+HAL_I2C_Master_Transmit(&hi2c1, address, dt, count+1, 10);
 }
 
 
@@ -655,5 +655,5 @@ void i2c_oled_I2C_Write(uint8_t address, uint8_t reg, uint8_t data) {
 	uint8_t dt[2];
 	dt[0] = reg;
 	dt[1] = data;
-	HAL_I2C_Master_Transmit(&hi2c2, address, dt, 2, 10);
+	HAL_I2C_Master_Transmit(&hi2c1, address, dt, 2, 10);
 }

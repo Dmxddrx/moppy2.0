@@ -11,6 +11,8 @@ extern float total_dist_R_cm;
 
 /* Chassis Control Functions */
 void Chassis_Init(void);
+void Chassis_SetTargetSpeed(int16_t left_ticks_per_loop, int16_t right_ticks_per_loop);
+void Chassis_ResetOdometry(void);
 void Chassis_Update(void);
 
 #endif /* CHASSIS_CONTROL_H_ */

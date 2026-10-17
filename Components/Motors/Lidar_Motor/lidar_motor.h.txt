@@ -1,0 +1,18 @@
+#ifndef LIDAR_MOTOR_H
+#define LIDAR_MOTOR_H
+
+#include "main.h"
+
+/* Lidar Motor Direction Macros */
+#define LIDAR_DIR_FORWARD  1
+#define LIDAR_DIR_REVERSE -1
+#define LIDAR_DIR_STOP     0
+
+/* Global state variable for GUI tracking */
+extern int8_t lidar_motor_dir;
+
+void LidarMotor_Init(void);
+void LidarMotor_SetSpeed(uint16_t pwm_val, int8_t direction);
+void LidarMotor_Stop(void);
+
+#endif // LIDAR_MOTOR_H

@@ -4,7 +4,7 @@
 
 /* C++ detection */
 #ifdef __cplusplus
-extern C {
+extern "C" {
 #endif
 
 #include "stm32f4xx_hal.h"

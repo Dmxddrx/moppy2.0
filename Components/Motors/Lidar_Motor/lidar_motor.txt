@@ -1,0 +1,45 @@
+#include "lidar_motor.h"
+
+int8_t lidar_motor_dir = LIDAR_DIR_STOP;
+
+void LidarMotor_Init(void)
+{
+    // Start the PWM generation on TIM4 Channel 2 (PD13)
+    HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
+    LidarMotor_Stop();
+}
+
+void LidarMotor_SetSpeed(uint16_t pwm_val, int8_t direction)
+{
+    // Cap PWM to the AutoReload Register (ARR) limit of 999
+    if (pwm_val > 999) {
+        pwm_val = 999;
+    }
+
+    if (direction == LIDAR_DIR_FORWARD) {
+        HAL_GPIO_WritePin(M6_BIN1_GPIO_Port, M6_BIN1_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(M6_BIN2_GPIO_Port, M6_BIN2_Pin, GPIO_PIN_RESET);
+        lidar_motor_dir = LIDAR_DIR_FORWARD;
+    }
+    else if (direction == LIDAR_DIR_REVERSE) {
+        HAL_GPIO_WritePin(M6_BIN1_GPIO_Port, M6_BIN1_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(M6_BIN2_GPIO_Port, M6_BIN2_Pin, GPIO_PIN_SET);
+        lidar_motor_dir = LIDAR_DIR_REVERSE;
+    }
+    else {
+        LidarMotor_Stop();
+        return;
+    }
+
+    // Apply duty cycle to TIM4_CH2
+    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_2, pwm_val);
+}
+
+void LidarMotor_Stop(void)
+{
+    // Pull both direction pins LOW for a soft stop/coast
+    HAL_GPIO_WritePin(M6_BIN1_GPIO_Port, M6_BIN1_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(M6_BIN2_GPIO_Port, M6_BIN2_Pin, GPIO_PIN_RESET);
+    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_2, 0);
+    lidar_motor_dir = LIDAR_DIR_STOP;
+}

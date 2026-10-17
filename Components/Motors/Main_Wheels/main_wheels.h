@@ -6,9 +6,9 @@
 #include <stdlib.h>
 
 /* Expose the timers configured in main.c */
-extern TIM_HandleTypeDef htim1;  // Left Wheel Encoder[cite: 12]
-extern TIM_HandleTypeDef htim3;  // Wheel PWMs[cite: 12]
-extern TIM_HandleTypeDef htim8;  // Right Wheel Encoder[cite: 12]
+extern TIM_HandleTypeDef htim1;  // Left Wheel Encoder (M1)
+extern TIM_HandleTypeDef htim3;  // Wheel PWMs (CH1=M2/Right, CH2=M1/Left)
+extern TIM_HandleTypeDef htim8;  // Right Wheel Encoder (M2)
 
 /* Initialization function */
 void MainWheels_Init(void);

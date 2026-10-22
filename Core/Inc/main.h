@@ -124,7 +124,23 @@ void Error_Handler(void);
 #define OLED_SDA_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
+#define LIDAR_DIAGNOSTICS       0
+#define DEBUG_BOOT_STAGES       0
+#define DEBUG_GENERAL_RUN_COUNT 0
 
+#if DEBUG_BOOT_STAGES
+extern volatile uint32_t debug_boot_stage;
+#define DEBUG_BOOT_STAGE(value) (debug_boot_stage = (value))
+#else
+#define DEBUG_BOOT_STAGE(value) ((void)0)
+#endif
+
+#if DEBUG_GENERAL_RUN_COUNT
+extern volatile uint32_t debug_general_run_count;
+#define DEBUG_GENERAL_RUN_COUNT_INC() (debug_general_run_count++)
+#else
+#define DEBUG_GENERAL_RUN_COUNT_INC() ((void)0)
+#endif
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

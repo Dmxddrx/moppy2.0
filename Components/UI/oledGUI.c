@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 /* Global variable to control the current page (0 to 3) */
-uint8_t current_gui_page = 0;
+uint8_t current_gui_page = 2;
 
 /* PAGE 0: M1 & M2 (Main Wheels & Encoders) */
 static void render_page_main_wheels(void)
@@ -79,6 +79,61 @@ static void render_page_brushes(void)
     OLED_Update();
 }
 
+/* PAGE 2: LiDAR Diagnostics */
+static void render_page_lidar_diagnostics(void)
+{
+    char buf[32];
+
+    OLED_Clear();
+    OLED_Print(14, 0, "LIDAR DIAGNOSTICS");
+    OLED_DrawLine(0, 10, 128, 10);
+
+    // Hardware status
+    // 1. Hardware Status (Layer 1: DMA byte flow)
+	bool hw_rx_active = Lidar_IsRxHardwareActive();
+	// 2. Protocol Status (Layer 2: 0xAA header parsed)
+	bool is_valid = Lidar_IsDataValid();
+	// 3. Application Status (Layer 3: 0xAD scanning phase)
+	bool is_scanning = Lidar_IsLaserOn();
+
+    // Protocol status
+	uint16_t rpm = Lidar_GetLiveRPM();
+	uint16_t pwm = LidarMotor_GetPWM();
+	bool pid_active = LidarMotor_IsPIDActive();
+
+	/* Line 1: Direct DMA Hardware Indicator */
+	const char *hw_str = hw_rx_active ? "FLOW OK" : "NO BYTES";
+	snprintf(buf, sizeof(buf), "HW  : %s", hw_str);
+	OLED_Print(2, 14, buf);
+
+	/* Line 2: Valid Protocol Indicator (Both 0xAE and 0xAD) */
+	const char *proto_str = is_valid ? "PROTOCOL OK" : "NO DATA";
+	snprintf(buf, sizeof(buf), "PROT: %s", proto_str);
+	OLED_Print(2, 24, buf);
+
+	/* Line 3: Scanning Phase Indicator (Strictly 0xAD state) */
+	const char *scan_str = is_scanning ? "SCANNING OK" : "NOT SCANNING";
+	snprintf(buf, sizeof(buf), "STAT: %s", scan_str);
+	OLED_Print(2, 34, buf);
+
+	/* Line 4: Speed */
+	snprintf(buf, sizeof(buf), "RPM : %u", rpm);
+	OLED_Print(2, 44, buf);
+
+	/* Line 5: Motor PWM Output */
+	snprintf(
+	    buf,
+	    sizeof(buf),
+	    "PWM:%u %s",
+	    pwm,
+	    pid_active ? "PID" : "OPEN"
+	);
+
+	OLED_Print(2, 54, buf);
+
+	OLED_Update();
+}
+
 /* MASTER ROUTER */
 void render_dashboard_page(void)
 {
@@ -92,10 +147,7 @@ void render_dashboard_page(void)
 			break;
 
 		case 2:
-			// Placeholder for Page 2
-			OLED_Clear();
-			OLED_Print(10, 20, "Page 2: Diagnostics");
-			OLED_Update();
+			render_page_lidar_diagnostics();
 			break;
 
 		case 3:
@@ -107,7 +159,7 @@ void render_dashboard_page(void)
 
         default:
             current_gui_page = 0;
-            render_page_main_wheels();
+            render_page_lidar_diagnostics();
             break;
     }
 }

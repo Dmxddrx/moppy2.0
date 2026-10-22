@@ -56,8 +56,18 @@ TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim8;
 
 UART_HandleTypeDef huart2;
+UART_HandleTypeDef huart3;
+DMA_HandleTypeDef hdma_usart3_rx;
 
 /* USER CODE BEGIN PV */
+
+#if DEBUG_BOOT_STAGES
+volatile uint32_t debug_boot_stage = 0;
+#endif
+
+#if DEBUG_GENERAL_RUN_COUNT
+volatile uint32_t debug_general_run_count = 0;
+#endif
 
 /* USER CODE END PV */
 
@@ -75,6 +85,7 @@ static void MX_I2C1_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_I2C3_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -98,21 +109,21 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+  //HAL_Init();
 
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
 
   /* Configure the system clock */
-  SystemClock_Config();
+  //SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
+  /*MX_GPIO_Init();
   MX_DMA_Init();
   MX_TIM1_Init();
   MX_IWDG_Init();
@@ -124,8 +135,57 @@ int main(void)
   MX_ADC1_Init();
   MX_I2C3_Init();
   MX_USART2_UART_Init();
+  MX_USART3_UART_Init();*/
   /* USER CODE BEGIN 2 */
+  DEBUG_BOOT_STAGE(1);
+  HAL_Init();
+
+  DEBUG_BOOT_STAGE(2);
+  SystemClock_Config();
+
+  DEBUG_BOOT_STAGE(3);
+  MX_GPIO_Init();
+
+  DEBUG_BOOT_STAGE(4);
+  MX_DMA_Init();
+
+  DEBUG_BOOT_STAGE(5);
+  MX_TIM1_Init();
+
+  DEBUG_BOOT_STAGE(6);
+  MX_IWDG_Init();
+
+  DEBUG_BOOT_STAGE(7);
+  MX_TIM3_Init();
+
+  DEBUG_BOOT_STAGE(8);
+  MX_TIM4_Init();
+
+  DEBUG_BOOT_STAGE(9);
+  MX_TIM8_Init();
+
+  DEBUG_BOOT_STAGE(10);
+  MX_I2C2_Init();
+
+  DEBUG_BOOT_STAGE(11);
+  MX_I2C1_Init();
+
+  DEBUG_BOOT_STAGE(12);
+  MX_ADC1_Init();
+
+  DEBUG_BOOT_STAGE(13);
+  MX_I2C3_Init();
+
+  DEBUG_BOOT_STAGE(14);
+  MX_USART2_UART_Init();
+
+  DEBUG_BOOT_STAGE(15);
+  MX_USART3_UART_Init();
+
+  DEBUG_BOOT_STAGE(20);
   General_Init();
+
+  DEBUG_BOOT_STAGE(21);
   //MainWheels_Init();
   /* USER CODE END 2 */
 
@@ -133,7 +193,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  General_Run();
+	    DEBUG_GENERAL_RUN_COUNT_INC();
+
+	    DEBUG_BOOT_STAGE(22);
+	    General_Run();
+
+	    DEBUG_BOOT_STAGE(23);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -357,7 +422,7 @@ static void MX_IWDG_Init(void)
 
   /* USER CODE END IWDG_Init 1 */
   hiwdg.Instance = IWDG;
-  hiwdg.Init.Prescaler = IWDG_PRESCALER_4;
+  hiwdg.Init.Prescaler = IWDG_PRESCALER_64;
   hiwdg.Init.Reload = 4095;
   if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
   {
@@ -641,6 +706,39 @@ static void MX_USART2_UART_Init(void)
 }
 
 /**
+  * @brief USART3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART3_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART3_Init 0 */
+
+  /* USER CODE END USART3_Init 0 */
+
+  /* USER CODE BEGIN USART3_Init 1 */
+
+  /* USER CODE END USART3_Init 1 */
+  huart3.Instance = USART3;
+  huart3.Init.BaudRate = 115200;
+  huart3.Init.WordLength = UART_WORDLENGTH_8B;
+  huart3.Init.StopBits = UART_STOPBITS_1;
+  huart3.Init.Parity = UART_PARITY_NONE;
+  huart3.Init.Mode = UART_MODE_RX;
+  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART3_Init 2 */
+
+  /* USER CODE END USART3_Init 2 */
+
+}
+
+/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -650,6 +748,9 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
+  /* DMA1_Stream1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
   /* DMA1_Stream2_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream2_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream2_IRQn);

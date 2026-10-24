@@ -1,2 +1,2 @@
 Before FreeRTOS:
-IMU configurations on going 
+IMU configurations done.

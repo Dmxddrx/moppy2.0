@@ -129,6 +129,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 #define LIDAR_DIAGNOSTICS       0
+#define IMU_DIAGNOSTICS         0
 #define DEBUG_BOOT_STAGES       0
 #define DEBUG_GENERAL_RUN_COUNT 0
 

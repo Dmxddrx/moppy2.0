@@ -15,6 +15,8 @@ static IMU_Data imu_data;
 static uint8_t mpu_dma_buf[14];
 static uint8_t hmc_dma_buf[6];
 
+#if IMU_DIAGNOSTICS
+
 volatile uint32_t imu_dbg_recovery_count = 0U;
 volatile uint32_t imu_dbg_timeout_count = 0U;
 volatile uint32_t imu_dbg_error_callback_count = 0U;
@@ -24,6 +26,36 @@ volatile uint32_t imu_dbg_last_dma_start_status = 0U;
 volatile uint32_t imu_dbg_last_i2c_error = 0U;
 volatile uint32_t imu_dbg_last_i2c_state = 0U;
 volatile uint32_t imu_dbg_last_recovery_ok = 0U;
+
+volatile uint32_t imu_dbg_hmc_addr_1e_seen = 0U;
+volatile uint32_t imu_dbg_qmc_addr_0d_seen = 0U;
+
+/* Sample-delivery diagnostics */
+volatile uint32_t imu_dbg_mpu_samples = 0U;
+volatile uint32_t imu_dbg_hmc_samples = 0U;
+
+volatile uint32_t imu_dbg_mpu_max_gap_ms = 0U;
+volatile uint32_t imu_dbg_hmc_max_gap_ms = 0U;
+
+#endif
+
+#if IMU_DIAGNOSTICS
+
+#define IMU_DBG_INC(name) \
+    ((name)++)
+
+#define IMU_DBG_SET(name, value) \
+    ((name) = (uint32_t)(value))
+
+#else
+
+#define IMU_DBG_INC(name) \
+    ((void)0U)
+
+#define IMU_DBG_SET(name, value) \
+    ((void)0U)
+
+#endif
 
 typedef enum
 {
@@ -48,6 +80,15 @@ const IMU_Data *IMU_GetData(void)
 
 void IMU_Init(void)
 {
+#if IMU_DIAGNOSTICS
+	imu_dbg_hmc_addr_1e_seen =
+	    (HAL_I2C_IsDeviceReady(
+	        &hi2c3, (0x1E << 1), 3U, 100U) == HAL_OK) ? 1U : 0U;
+
+	imu_dbg_qmc_addr_0d_seen =
+	    (HAL_I2C_IsDeviceReady(
+	        &hi2c3, (0x0D << 1), 3U, 100U) == HAL_OK) ? 1U : 0U;
+#endif
     /* Check both sensors on I2C3. */
     imu_data.mpu_status = MPU6050_Check(&hi2c3);
     imu_data.hmc_status = HMC5883L_Check(&hi2c3);
@@ -92,10 +133,9 @@ void IMU_OnError(I2C_HandleTypeDef *hi2c)
 {
     if ((hi2c == &hi2c3) && (bus_state != IMU_BUS_IDLE))
     {
-        imu_dbg_error_callback_count++;
-
-        imu_dbg_last_i2c_error = hi2c->ErrorCode;
-        imu_dbg_last_i2c_state = (uint32_t)hi2c->State;
+    	IMU_DBG_INC(imu_dbg_error_callback_count);
+		IMU_DBG_SET(imu_dbg_last_i2c_error, hi2c->ErrorCode);
+		IMU_DBG_SET(imu_dbg_last_i2c_state, hi2c->State);
 
         dma_error_pending = 1U;
     }
@@ -118,7 +158,7 @@ void IMU_Process(void)
         ((uint32_t)(now - active_transfer_started_ms) >=
          IMU_TRANSFER_TIMEOUT_MS))
     {
-    	imu_dbg_timeout_count++;
+    	IMU_DBG_INC(imu_dbg_timeout_count);
         dma_error_pending = 1U;
     }
 
@@ -134,10 +174,13 @@ void IMU_Process(void)
         imu_data.mpu_data_valid = false;
         imu_data.hmc_data_valid = false;
 
-        imu_dbg_recovery_count++;
+#if IMU_DIAGNOSTICS
+        bool recovery_ok = I2C3_RecoverBus();
+#endif
 
-        imu_dbg_last_recovery_ok =
-            I2C3_RecoverBus() ? 1U : 0U;
+        IMU_DBG_INC(imu_dbg_recovery_count);
+        IMU_DBG_SET(imu_dbg_last_recovery_ok,
+                    recovery_ok ? 1U : 0U);
 
         now = HAL_GetTick();
         last_transfer_start = now;
@@ -161,19 +204,56 @@ void IMU_Process(void)
             imu_data.mpu_physical =
                 MPU6050_GetPhysical(&imu_data.mpu_raw);
 
-            imu_data.mpu_timestamp_ms = HAL_GetTick();
+            uint32_t sample_time = HAL_GetTick();
+
+        #if IMU_DIAGNOSTICS
+            if (imu_dbg_mpu_samples > 0U)
+            {
+                uint32_t gap =
+                    sample_time - imu_data.mpu_timestamp_ms;
+
+                if (gap > imu_dbg_mpu_max_gap_ms)
+                {
+                    imu_dbg_mpu_max_gap_ms = gap;
+                }
+            }
+
+            imu_dbg_mpu_samples++;
+        #endif
+
+            imu_data.mpu_timestamp_ms = sample_time;
             imu_data.mpu_data_valid = true;
         }
+
         else if (bus_state == IMU_BUS_HMC)
         {
             HMC5883L_ParseDMA(hmc_dma_buf, &imu_data.hmc_raw);
 
-            imu_data.hmc_timestamp_ms = HAL_GetTick();
+            uint32_t sample_time = HAL_GetTick();
+
+        #if IMU_DIAGNOSTICS
+            if (imu_dbg_hmc_samples > 0U)
+            {
+                uint32_t gap =
+                    sample_time - imu_data.hmc_timestamp_ms;
+
+                if (gap > imu_dbg_hmc_max_gap_ms)
+                {
+                    imu_dbg_hmc_max_gap_ms = gap;
+                }
+            }
+
+            imu_dbg_hmc_samples++;
+        #endif
+
+            imu_data.hmc_timestamp_ms = sample_time;
             imu_data.hmc_data_valid = true;
         }
 
         bus_state = IMU_BUS_IDLE;
     }
+
+
 
     /*
      * Never start another transaction while DMA is active.
@@ -186,10 +266,15 @@ void IMU_Process(void)
     now = HAL_GetTick();
 
     /* Wait before retrying after an error or recovery. */
-    if ((retry_after_ms != 0U) &&
-        ((int32_t)(now - retry_after_ms) < 0))
+    if (retry_after_ms != 0U)
     {
-        return;
+        if ((int32_t)(now - retry_after_ms) < 0)
+        {
+            return;
+        }
+
+        /* Retry deadline reached; clear the expired deadline. */
+        retry_after_ms = 0U;
     }
 
     if ((uint32_t)(now - last_transfer_start) <
@@ -225,15 +310,19 @@ void IMU_Process(void)
 
         if (status == HAL_OK)
         {
-            next_sensor_is_mpu = 0U;
+        	use_mpu = mpu_available &&
+        	          (next_sensor_is_mpu || !hmc_available);
+
+        	/* Choose the other sensor for the next attempt. */
+        	next_sensor_is_mpu = use_mpu ? 0U : 1U;
         }
         else
         {
-            imu_dbg_dma_start_fail_count++;
+        	IMU_DBG_INC(imu_dbg_dma_start_fail_count);
 
-            imu_dbg_last_dma_start_status = (uint32_t)status;
-            imu_dbg_last_i2c_error = hi2c3.ErrorCode;
-            imu_dbg_last_i2c_state = (uint32_t)hi2c3.State;
+        	IMU_DBG_SET(imu_dbg_last_dma_start_status, status);
+        	IMU_DBG_SET(imu_dbg_last_i2c_error, hi2c3.ErrorCode);
+        	IMU_DBG_SET(imu_dbg_last_i2c_state, hi2c3.State);
 
             bus_state = IMU_BUS_IDLE;
             dma_error_pending = 1U;
@@ -247,15 +336,19 @@ void IMU_Process(void)
 
         if (status == HAL_OK)
         {
-            next_sensor_is_mpu = 1U;
+        	use_mpu = mpu_available &&
+        	          (next_sensor_is_mpu || !hmc_available);
+
+        	/* Choose the other sensor for the next attempt. */
+        	next_sensor_is_mpu = use_mpu ? 0U : 1U;
         }
         else
         {
-            imu_dbg_dma_start_fail_count++;
+        	IMU_DBG_INC(imu_dbg_dma_start_fail_count);
 
-            imu_dbg_last_dma_start_status = (uint32_t)status;
-            imu_dbg_last_i2c_error = hi2c3.ErrorCode;
-            imu_dbg_last_i2c_state = (uint32_t)hi2c3.State;
+        	IMU_DBG_SET(imu_dbg_last_dma_start_status, status);
+        	IMU_DBG_SET(imu_dbg_last_i2c_error, hi2c3.ErrorCode);
+        	IMU_DBG_SET(imu_dbg_last_i2c_state, hi2c3.State);
 
             bus_state = IMU_BUS_IDLE;
             dma_error_pending = 1U;

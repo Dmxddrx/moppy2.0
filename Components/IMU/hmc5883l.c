@@ -31,16 +31,25 @@ HMC_Status HMC5883L_Check(I2C_HandleTypeDef *hi2c)
 }
 
 /* ─────────────────────────────────────────────────────────────── */
-void HMC5883L_Init(void)
+HAL_StatusTypeDef HMC5883L_Init(void)
 {
-    HAL_Delay(10);
-    /* CRA: 8 samples avg, 15 Hz output, normal measurement       */
-    WriteReg(REG_CONFIG_A, 0x78);
-    /* CRB: gain = 1090 LSB/Gauss (default ±1.3 Ga range)         */
-    WriteReg(REG_CONFIG_B, 0x20);
-    /* Mode: continuous measurement                                */
-    WriteReg(REG_MODE, 0x00);
-    HAL_Delay(15);   /* wait one measurement cycle (75 Hz → ~13 ms) */
+    HAL_StatusTypeDef status;
+
+    status = WriteReg(REG_CONFIG_A, 0x78);
+    if (status != HAL_OK)
+        return status;
+
+    status = WriteReg(REG_CONFIG_B, 0x20);
+    if (status != HAL_OK)
+        return status;
+
+    status = WriteReg(REG_MODE, 0x00);
+    if (status != HAL_OK)
+        return status;
+
+    HAL_Delay(15U);
+
+    return HAL_OK;
 }
 
 /* ─────────────────────────────────────────────────────────────── */

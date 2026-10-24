@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include "i2c3.h"
 
-#define HMC5883L_ADDR  (0x0D << 1)   /* 0x3C write, 0x3D read    */
+#define HMC5883L_ADDR  (0x1e << 1)   /* 0x3C write, 0x3D read    */
 
 typedef enum {
     HMC_OK       = 0,
@@ -22,7 +22,7 @@ typedef struct {
 } HMC5883L_SelfTestData;
 
 HMC_Status            HMC5883L_Check(I2C_HandleTypeDef *hi2c);
-void                  HMC5883L_Init(void);
+HAL_StatusTypeDef 	  HMC5883L_Init(void);
 HAL_StatusTypeDef 	  HMC5883L_ReadRaw(HMC5883L_RawData *data);
 HMC5883L_SelfTestData HMC5883L_SelfTest(void);
 

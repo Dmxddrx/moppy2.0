@@ -7,6 +7,29 @@
 #include "mpu6050.h"
 #include "hmc5883l.h"
 #include "i2c3.h"
+#include "main.h"
+
+#if IMU_DIAGNOSTICS
+
+extern volatile uint32_t imu_dbg_recovery_count;
+extern volatile uint32_t imu_dbg_timeout_count;
+extern volatile uint32_t imu_dbg_error_callback_count;
+extern volatile uint32_t imu_dbg_dma_start_fail_count;
+
+extern volatile uint32_t imu_dbg_last_dma_start_status;
+extern volatile uint32_t imu_dbg_last_i2c_error;
+extern volatile uint32_t imu_dbg_last_i2c_state;
+extern volatile uint32_t imu_dbg_last_recovery_ok;
+
+extern volatile uint32_t imu_dbg_hmc_addr_1e_seen;
+extern volatile uint32_t imu_dbg_qmc_addr_0d_seen;
+
+extern volatile uint32_t imu_dbg_mpu_samples;
+extern volatile uint32_t imu_dbg_hmc_samples;
+extern volatile uint32_t imu_dbg_mpu_max_gap_ms;
+extern volatile uint32_t imu_dbg_hmc_max_gap_ms;
+
+#endif
 
 typedef struct
 {

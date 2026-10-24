@@ -14,8 +14,9 @@ typedef enum {
 
 /* Raw 16-bit values from sensor registers */
 typedef struct {
-    int16_t ax, ay, az;   /* accelerometer — bias already removed */
-    int16_t gx, gy, gz;   /* gyroscope     — bias already removed */
+    int16_t ax, ay, az;
+    int16_t temp_raw;
+    int16_t gx, gy, gz;
 } MPU6050_RawData;
 
 /* Physical units
@@ -24,6 +25,7 @@ typedef struct {
 typedef struct {
     float ax, ay, az;     /* m/s²   */
     float gx, gy, gz;     /* deg/s  */
+    float temperature_c;  /* degrees Celsius */
 } MPU6050_PhysData;
 
 MPU_Status        MPU6050_Check(I2C_HandleTypeDef *hi2c);

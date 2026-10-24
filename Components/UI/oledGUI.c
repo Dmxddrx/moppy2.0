@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 /* Global variable to control the current page (0 to 3) */
-uint8_t current_gui_page = 2;
+uint8_t current_gui_page = 3;
 
 /* PAGE 0: M1 & M2 (Main Wheels & Encoders) */
 static void render_page_main_wheels(void)
@@ -134,6 +134,150 @@ static void render_page_lidar_diagnostics(void)
 	OLED_Update();
 }
 
+static const char *mpu_status_text(const IMU_Data *data)
+{
+    if (data->mpu_status == MPU_NO_I2C)
+        return "NO I2C";
+
+    if (data->mpu_status == MPU_WRONG_ID)
+        return "BAD ID";
+
+    return data->mpu_data_valid ? "OK" : "WAIT";
+}
+
+
+static const char *hmc_status_text(const IMU_Data *data)
+{
+    if (data->hmc_status == HMC_NO_I2C)
+        return "NO I2C";
+
+    if (data->hmc_status == HMC_WRONG_ID)
+        return "BAD ID";
+
+    return data->hmc_data_valid ? "OK" : "WAIT";
+}
+
+
+/* PAGE 3: MPU6050 + HMC5883L live data */
+static void render_page_imu_data(void)
+{
+    char buf[32];
+    const IMU_Data *data = IMU_GetData();
+
+    uint32_t mpu_sample_age_ms;
+
+    if (data->mpu_timestamp_ms == 0U)
+    {
+        mpu_sample_age_ms = UINT32_MAX;  // No sample received yet
+    }
+    else
+    {
+        mpu_sample_age_ms =
+            HAL_GetTick() - data->mpu_timestamp_ms;
+    }
+
+    OLED_Clear();
+
+    OLED_Print(20, 0, "IMU SENSOR DATA");
+    OLED_DrawLine(0, 10, 128, 10);
+
+    /* Sensor initialization and data-acquisition status */
+    snprintf(
+        buf,
+        sizeof(buf),
+        "MPU:%s HMC:%s",
+        mpu_status_text(data),
+        hmc_status_text(data)
+    );
+    OLED_Print(2, 12, buf);
+
+    /* Accelerometer: m/s^2 */
+    if (data->mpu_data_valid)
+    {
+        snprintf(
+            buf,
+            sizeof(buf),
+            "A:%+.1f,%+.1f,%+.1f",
+            (double)data->mpu_physical.ax,
+            (double)data->mpu_physical.ay,
+            (double)data->mpu_physical.az
+        );
+    }
+    else
+    {
+        snprintf(buf, sizeof(buf), "A: WAITING");
+    }
+    OLED_Print(2, 22, buf);
+
+    /* Gyroscope: degrees per second */
+    if (data->mpu_data_valid)
+    {
+        snprintf(
+            buf,
+            sizeof(buf),
+            "G:%+.1f,%+.1f,%+.1f",
+            (double)data->mpu_physical.gx,
+            (double)data->mpu_physical.gy,
+            (double)data->mpu_physical.gz
+        );
+    }
+    else
+    {
+        snprintf(buf, sizeof(buf), "G: WAITING");
+    }
+    OLED_Print(2, 32, buf);
+
+    /* Raw magnetic readings divided by 100 for screen space */
+    if (data->hmc_data_valid)
+    {
+        snprintf(
+            buf,
+            sizeof(buf),
+            "M/100:%d,%d,%d",
+            (int)(data->hmc_raw.mx / 100),
+            (int)(data->hmc_raw.my / 100),
+            (int)(data->hmc_raw.mz / 100)
+        );
+    }
+    else
+    {
+        snprintf(buf, sizeof(buf), "M: WAITING");
+    }
+    OLED_Print(2, 42, buf);
+
+
+    /* MPU6050 internal temperature */
+    /*if (data->mpu_data_valid)
+    {
+        snprintf(
+            buf,
+            sizeof(buf),
+            "TEMP: %.1f C",
+            (double)data->mpu_physical.temperature_c
+        );
+    }
+    else
+    {
+        snprintf(buf, sizeof(buf), "TEMP: --.- C");
+    }
+    OLED_Print(2, 52, buf);*/
+
+
+    if (mpu_sample_age_ms == UINT32_MAX)
+    {
+        snprintf(buf, sizeof(buf), "MPU AGE: NEVER");
+    }
+    else
+    {
+        snprintf(buf, sizeof(buf), "AGE:%lu ms %s",
+                 (unsigned long)mpu_sample_age_ms,
+                 data->mpu_data_valid ? "VALID" : "ERROR");
+    }
+
+    OLED_Print(2, 52, buf);
+
+    OLED_Update();
+}
 /* MASTER ROUTER */
 void render_dashboard_page(void)
 {
@@ -151,10 +295,7 @@ void render_dashboard_page(void)
 			break;
 
 		case 3:
-			// Placeholder for Page 3
-			OLED_Clear();
-			OLED_Print(10, 20, "Page 3: Settings");
-			OLED_Update();
+			render_page_imu_data();
 			break;
 
         default:

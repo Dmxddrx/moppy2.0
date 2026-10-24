@@ -1,10 +1,19 @@
 #include "general.h"
 
+volatile uint32_t debug_chassis_dt_ms = 0U;
+volatile uint32_t debug_chassis_dt_max_ms = 0U;
+volatile uint32_t debug_chassis_late_count = 0U;
+
 void General_Init(void)
 {
+	IMU_Init();
     /* 1. Activate TB6612FNG Motor Driver 1 (Main Wheels) */
-    // Pull MD1_STBY on PE6 HIGH to enable the main wheel motor driver[cite: 19, 54]
-    HAL_GPIO_WritePin(MD1_STBY_GPIO_Port, MD1_STBY_Pin, GPIO_PIN_SET);
+	 /* Enable main wheel motor driver after IMU initialization. */
+		HAL_GPIO_WritePin(
+			MD1_STBY_GPIO_Port,
+			MD1_STBY_Pin,
+			GPIO_PIN_SET
+		);
 
     /* 2. Initialize Subsystems */
     DEBUG_BOOT_STAGE(30);
@@ -40,10 +49,10 @@ void General_Init(void)
     }
 
     // Set a baseline forward speed for testing your PID and encoders
-    Chassis_SetTargetSpeed(0, 0);
+    Chassis_SetTargetSpeed(200, 200);
     // Set target speeds for the cleaning hardware ONCE
-	SideBrushes_Start(0);
-	RollerBrush_Start(0);
+	SideBrushes_Start(400);
+	RollerBrush_Start(400);
 
 }
 
@@ -52,8 +61,10 @@ void General_Run(void)
     HAL_IWDG_Refresh(&hiwdg);
 
     uint32_t current_time = HAL_GetTick();
+
     static uint32_t last_display_update = 0;
-    static uint32_t last_chassis_update = 0;
+    static uint32_t last_chassis_update = 0U;
+    static uint8_t chassis_timer_started = 0U;
 
     DEBUG_BOOT_STAGE(50);
 
@@ -74,14 +85,34 @@ void General_Run(void)
 
     /* --- 2. DETERMINISTIC CHASSIS CONTROL --- */
     // Execute the PID loop strictly every 20ms to satisfy the Δt requirement
-    if ((current_time - last_chassis_update) >= 20) {
-        last_chassis_update = current_time;
 
-        DEBUG_BOOT_STAGE(52);
+    if (chassis_timer_started == 0U)
+    {
+        last_chassis_update = current_time;
+        chassis_timer_started = 1U;
+    }
+    else if ((uint32_t)(current_time - last_chassis_update) >= 20U)
+    {
+        uint32_t dt_ms = current_time - last_chassis_update;
+
+        debug_chassis_dt_ms = dt_ms;
+
+        if (dt_ms > debug_chassis_dt_max_ms)
+        {
+            debug_chassis_dt_max_ms = dt_ms;
+        }
+
+        if (dt_ms > 25U)
+        {
+            debug_chassis_late_count++;
+        }
+
+        last_chassis_update = current_time;
 
         Chassis_Update();
     }
 
+    IMU_Process();
     /* --- 3. BRUSH & LIDAR SOFT START UPDATES --- */
 	// Continuously step the PWM towards the targets set in initialization
     DEBUG_BOOT_STAGE(53);

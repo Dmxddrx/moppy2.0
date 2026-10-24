@@ -2,7 +2,7 @@
 #include <math.h>
 
 /* I2C1: PB6 (SCL1), PB7 (SDA1) — shared with MPU6500            */
-extern I2C_HandleTypeDef hi2c1;
+extern I2C_HandleTypeDef hi2c3;
 
 /* ── Register map ───────────────────────────────────────────────*/
 #define REG_CONFIG_A  0x00
@@ -15,7 +15,7 @@ extern I2C_HandleTypeDef hi2c1;
 /* ─────────────────────────────────────────────────────────────── */
 static HAL_StatusTypeDef WriteReg(uint8_t reg, uint8_t val)
 {
-    return HAL_I2C_Mem_Write(&hi2c1, HMC5883L_ADDR, reg, 1, &val, 1, 10);
+    return HAL_I2C_Mem_Write(&hi2c3, HMC5883L_ADDR, reg, 1, &val, 1, 10);
 }
 
 /* ─────────────────────────────────────────────────────────────── */
@@ -44,15 +44,37 @@ void HMC5883L_Init(void)
 }
 
 /* ─────────────────────────────────────────────────────────────── */
-void HMC5883L_ReadRaw(HMC5883L_RawData *data)
+HAL_StatusTypeDef HMC5883L_ReadRaw(HMC5883L_RawData *data)
 {
-    uint8_t buf[6] = {0};
-    /* NOTE: HMC5883L data register order is X, Z, Y — not X, Y, Z */
-    HAL_I2C_Mem_Read(&hi2c1, HMC5883L_ADDR,
-                     REG_DATA_XH, 1, buf, 6, 10);
-    data->mx = (int16_t)((buf[0] << 8) | buf[1]);
-    data->mz = (int16_t)((buf[2] << 8) | buf[3]);
-    data->my = (int16_t)((buf[4] << 8) | buf[5]);
+    uint8_t buf[6];
+    HAL_StatusTypeDef status;
+
+    if (data == NULL)
+    {
+        return HAL_ERROR;
+    }
+
+    status = HAL_I2C_Mem_Read(
+        &hi2c3,
+        HMC5883L_ADDR,
+        REG_DATA_XH,
+        I2C_MEMADD_SIZE_8BIT,
+        buf,
+        sizeof(buf),
+        20U
+    );
+
+    if (status != HAL_OK)
+    {
+        return status;
+    }
+
+    /* Genuine HMC5883L register order: X, Z, Y. */
+    data->mx = (int16_t)(((uint16_t)buf[0] << 8) | buf[1]);
+    data->mz = (int16_t)(((uint16_t)buf[2] << 8) | buf[3]);
+    data->my = (int16_t)(((uint16_t)buf[4] << 8) | buf[5]);
+
+    return HAL_OK;
 }
 
 /* ─────────────────────────────────────────────────────────────── */
@@ -72,8 +94,8 @@ float HMC5883L_GetHeading(float mx, float my)
     // range_y = (Y_max - Y_min) / 2.0f
     // avg_range = (range_x + range_y) / 2.0f
 
-    float scale_x = 0.0f; // avg_range / range_x
-    float scale_y = 0.0f; // avg_range / range_y
+    float scale_x = 1.0f; // avg_range / range_x
+    float scale_y = 1.0f; // avg_range / range_y
 
     /* Step A: Remove Hard Iron distortion (shift to center) */
     float cal_mx = mx - offset_x;
@@ -96,25 +118,29 @@ float HMC5883L_GetHeading(float mx, float my)
 HMC5883L_SelfTestData HMC5883L_SelfTest(void)
 {
     HMC5883L_SelfTestData result = {0};
-    /* Enable positive bias self-test on X axis                    */
-    WriteReg(REG_CONFIG_A, 0x71);  /* 8 samples, 15 Hz, positive bias */
+    HMC5883L_RawData raw = {0};
+
+    /* Enable positive-bias self-test mode. */
+    WriteReg(REG_CONFIG_A, 0x71);
     HAL_Delay(67);
 
-    HMC5883L_RawData raw;
-    HMC5883L_ReadRaw(&raw);
-    result.mx = raw.mx;
-    result.my = raw.my;
-    result.mz = raw.mz;
+    if (HMC5883L_ReadRaw(&raw) == HAL_OK)
+    {
+        result.mx = raw.mx;
+        result.my = raw.my;
+        result.mz = raw.mz;
+    }
 
-    /* Restore normal operation                                    */
+    /* Restore normal operation. */
     HMC5883L_Init();
+
     return result;
 }
 /* ─────────────────────────────────────────────────────────────── */
 HAL_StatusTypeDef HMC5883L_ReadRaw_DMA(uint8_t *dma_buf)
 {
     /* Tells the DMA hardware to fetch 6 bytes in the background */
-    return HAL_I2C_Mem_Read_DMA(&hi2c1, HMC5883L_ADDR, REG_DATA_XH, 1, dma_buf, 6);
+    return HAL_I2C_Mem_Read_DMA(&hi2c3, HMC5883L_ADDR, REG_DATA_XH, 1, dma_buf, 6);
 }
 
 void HMC5883L_ParseDMA(uint8_t *dma_buf, HMC5883L_RawData *data)

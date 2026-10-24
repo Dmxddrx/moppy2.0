@@ -1,7 +1,7 @@
 #include "mpu6050.h"
 
 /* I2C1: PB6 (SCL1), PB7 (SDA1) — shared with HMC5883L          */
-extern I2C_HandleTypeDef hi2c1;
+extern I2C_HandleTypeDef hi2c3;
 extern IWDG_HandleTypeDef hiwdg;
 
 /* ── Register map ───────────────────────────────────────────────*/
@@ -25,11 +25,11 @@ static int16_t s_accel_bias[2] = {0, 0};
 /* ─────────────────────────────────────────────────────────────── */
 static HAL_StatusTypeDef WriteReg(uint8_t reg, uint8_t val)
 {
-    return HAL_I2C_Mem_Write(&hi2c1, MPU6050_ADDR, reg, 1, &val, 1, 10);
+    return HAL_I2C_Mem_Write(&hi2c3, MPU6050_ADDR, reg, 1, &val, 1, 10);
 }
 static HAL_StatusTypeDef ReadRegs(uint8_t reg, uint8_t *buf, uint16_t len)
 {
-    return HAL_I2C_Mem_Read(&hi2c1, MPU6050_ADDR, reg, 1, buf, len, 20);
+    return HAL_I2C_Mem_Read(&hi2c3, MPU6050_ADDR, reg, 1, buf, len, 20);
 }
 
 /* ─────────────────────────────────────────────────────────────── */
@@ -52,15 +52,15 @@ void MPU6050_Init(void)
     HAL_Delay(100);
 
     WriteReg(REG_PWR_MGMT_1, 0x80);
-    HAL_IWDG_Refresh(&hiwdg);/* device reset              */
+    HAL_IWDG_Refresh(&hiwdg);
 
     HAL_Delay(100);
-    WriteReg(REG_PWR_MGMT_1, 0x01);   /* clock = PLL gyro X        */
+    WriteReg(REG_PWR_MGMT_1, 0x01);
     HAL_Delay(10);
-    WriteReg(REG_SMPLRT_DIV,  0x07);  /* 8 kHz / 8 = 1 kHz sample  */
-    WriteReg(REG_CONFIG,       0x03); /* DLPF_CFG 3 → 44 Hz BW     */
-    WriteReg(REG_GYRO_CONFIG,  0x00); /* ±250 °/s                   */
-    WriteReg(REG_ACCEL_CONFIG, 0x00); /* ±2 g                       */
+    WriteReg(REG_SMPLRT_DIV,  0x07);
+    WriteReg(REG_CONFIG,       0x03);
+    WriteReg(REG_GYRO_CONFIG,  0x00);
+    WriteReg(REG_ACCEL_CONFIG, 0x00);
 
     HAL_IWDG_Refresh(&hiwdg);
     HAL_Delay(100);
@@ -108,18 +108,59 @@ void MPU6050_CalibrateGyro(void)
 HAL_StatusTypeDef MPU6050_ReadRaw(MPU6050_RawData *data)
 {
     uint8_t buf[14];
-    HAL_StatusTypeDef st = ReadRegs(REG_ACCEL_XOUT_H, buf, 14);
-    if (st != HAL_OK) return st;
+    HAL_StatusTypeDef status;
+
+    if (data == NULL)
+    {
+        return HAL_ERROR;
+    }
+
+    status = ReadRegs(REG_ACCEL_XOUT_H, buf, sizeof(buf));
+
+    if (status != HAL_OK)
+    {
+        return status;
+    }
 
     data->ax = (int16_t)((buf[0]  << 8) | buf[1]);
     data->ay = (int16_t)((buf[2]  << 8) | buf[3]);
     data->az = (int16_t)((buf[4]  << 8) | buf[5]);
-    /* buf[6..7] = temperature — not used here                     */
-    data->gx = (int16_t)((buf[8]  << 8) | buf[9])  - s_gyro_bias[0];
-    data->gy = (int16_t)((buf[10] << 8) | buf[11]) - s_gyro_bias[1];
-    data->gz = (int16_t)((buf[12] << 8) | buf[13]) - s_gyro_bias[2];
+
+    data->temp_raw =
+        (int16_t)(((uint16_t)buf[6] << 8) | buf[7]);
+
+    data->gx = (int16_t)((buf[8]  << 8) | buf[9]);
+    data->gy = (int16_t)((buf[10] << 8) | buf[11]);
+    data->gz = (int16_t)((buf[12] << 8) | buf[13]);
 
     return HAL_OK;
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+HAL_StatusTypeDef MPU6050_ReadRaw_DMA(uint8_t *dma_buf)
+{
+    /* Tells the DMA hardware to fetch 14 bytes in the background */
+    return HAL_I2C_Mem_Read_DMA(&hi2c3, MPU6050_ADDR, REG_ACCEL_XOUT_H, 1, dma_buf, 14);
+}
+
+void MPU6050_ParseDMA(uint8_t *dma_buf, MPU6050_RawData *data)
+{
+	 if ((dma_buf == NULL) || (data == NULL))
+	{
+		return;
+	}
+
+    /* Translates the raw bytes after the DMA transfer is complete */
+    data->ax = (int16_t)((dma_buf[0]  << 8) | dma_buf[1]);
+    data->ay = (int16_t)((dma_buf[2]  << 8) | dma_buf[3]);
+    data->az = (int16_t)((dma_buf[4]  << 8) | dma_buf[5]);
+
+    data->temp_raw =
+        (int16_t)(((uint16_t)dma_buf[6] << 8) | dma_buf[7]);
+
+    data->gx = (int16_t)((dma_buf[8]  << 8) | dma_buf[9]);
+    data->gy = (int16_t)((dma_buf[10] << 8) | dma_buf[11]);
+    data->gz = (int16_t)((dma_buf[12] << 8) | dma_buf[13]);
 }
 
 /* ─────────────────────────────────────────────────────────────── */
@@ -132,6 +173,9 @@ MPU6050_PhysData MPU6050_GetPhysical(const MPU6050_RawData *raw)
     p.ay = (raw->ay - s_accel_bias[1]) * ACCEL_SCALE_MS2;
     p.az = raw->az * ACCEL_SCALE_MS2; /* Z untouched, reads 9.81 */
 
+    p.temperature_c =
+        ((float)raw->temp_raw / 340.0f) + 36.53f;
+
     /* Subtract Gyro biases so the 100Hz DMA loop stays accurate */
     p.gx = (raw->gx - s_gyro_bias[0]) * GYRO_SCALE_DPS;
     p.gy = (raw->gy - s_gyro_bias[1]) * GYRO_SCALE_DPS;
@@ -139,20 +183,4 @@ MPU6050_PhysData MPU6050_GetPhysical(const MPU6050_RawData *raw)
 
     return p;
 }
-/* ─────────────────────────────────────────────────────────────── */
-HAL_StatusTypeDef MPU6050_ReadRaw_DMA(uint8_t *dma_buf)
-{
-    /* Tells the DMA hardware to fetch 14 bytes in the background */
-    return HAL_I2C_Mem_Read_DMA(&hi2c1, MPU6050_ADDR, REG_ACCEL_XOUT_H, 1, dma_buf, 14);
-}
 
-void MPU6050_ParseDMA(uint8_t *dma_buf, MPU6050_RawData *data)
-{
-    /* Translates the raw bytes after the DMA transfer is complete */
-    data->ax = (int16_t)((dma_buf[0]  << 8) | dma_buf[1]);
-    data->ay = (int16_t)((dma_buf[2]  << 8) | dma_buf[3]);
-    data->az = (int16_t)((dma_buf[4]  << 8) | dma_buf[5]);
-    data->gx = (int16_t)((dma_buf[8]  << 8) | dma_buf[9])  - s_gyro_bias[0];
-    data->gy = (int16_t)((dma_buf[10] << 8) | dma_buf[11]) - s_gyro_bias[1];
-    data->gz = (int16_t)((dma_buf[12] << 8) | dma_buf[13]) - s_gyro_bias[2];
-}

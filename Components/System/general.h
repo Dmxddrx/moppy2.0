@@ -18,6 +18,7 @@
 #include "roller_brush.h"
 #include "lidar_pid.h"
 
+#include "imu_manager.h"
 
 /* Expose global handles from main.c */
 extern IWDG_HandleTypeDef hiwdg;

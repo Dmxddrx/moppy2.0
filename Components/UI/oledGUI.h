@@ -8,6 +8,7 @@
 #include "roller_brush.h"
 #include "lidar_uart.h"
 #include "lidar_pid.h"
+#include "imu_manager.h"
 
 /* Global variable to control the current page (0=Wheels, 1=Vacuum, 2=Brushes) */
 extern uint8_t current_gui_page;

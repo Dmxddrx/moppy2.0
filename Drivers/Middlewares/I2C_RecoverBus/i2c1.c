@@ -1,4 +1,4 @@
-#include "i2c1.h"
+#include "../I2C_RecoverBus/i2c1.h"
 
 extern I2C_HandleTypeDef hi2c1;
 

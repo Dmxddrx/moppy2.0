@@ -204,4 +204,4 @@ Suggestions, bug reports, and improvements are welcome. When reporting a problem
 
 ## License
 
-See the [`LICENSE`](LICENSE) file in this repository for the applicable license and conditions.
+See the [`LICENSE`](LICENSE.md) file in this repository for the applicable license and conditions.

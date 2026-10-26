@@ -204,4 +204,5 @@ Suggestions, bug reports, and improvements are welcome. When reporting a problem
 
 ## License
 
-See the [`LICENSE`](LICENSE.md) file in this repository for the applicable license and conditions.
+This project is licensed under the MIT License.
+See the [LICENSE.md](LICENSE.md) file for details.

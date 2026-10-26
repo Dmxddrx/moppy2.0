@@ -15,4 +15,7 @@ void Chassis_SetTargetSpeed(int16_t left_ticks_per_loop, int16_t right_ticks_per
 void Chassis_ResetOdometry(void);
 void Chassis_Update(void);
 
+void Chassis_SetVelocity(float linear_cm_s,
+                         float angular_deg_s);
+
 #endif /* CHASSIS_CONTROL_H_ */

@@ -18,10 +18,12 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "general.h"
+#include "telemetry.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,7 +48,6 @@ I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c2;
 I2C_HandleTypeDef hi2c3;
 DMA_HandleTypeDef hdma_i2c1_tx;
-DMA_HandleTypeDef hdma_i2c2_rx;
 DMA_HandleTypeDef hdma_i2c3_rx;
 DMA_HandleTypeDef hdma_i2c3_tx;
 
@@ -59,8 +60,38 @@ TIM_HandleTypeDef htim8;
 
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
+DMA_HandleTypeDef hdma_usart2_tx;
+DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_usart3_rx;
 
+/* Definitions for ImuTask */
+osThreadId_t ImuTaskHandle;
+const osThreadAttr_t ImuTask_attributes = {
+  .name = "ImuTask",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for WheelTask */
+osThreadId_t WheelTaskHandle;
+const osThreadAttr_t WheelTask_attributes = {
+  .name = "WheelTask",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityHigh,
+};
+/* Definitions for GeneralTask */
+osThreadId_t GeneralTaskHandle;
+const osThreadAttr_t GeneralTask_attributes = {
+  .name = "GeneralTask",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityLow3,
+};
+/* Definitions for TelemetryTask */
+osThreadId_t TelemetryTaskHandle;
+const osThreadAttr_t TelemetryTask_attributes = {
+  .name = "TelemetryTask",
+  .stack_size = 384 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* USER CODE BEGIN PV */
 
 #if DEBUG_BOOT_STAGES
@@ -71,6 +102,9 @@ volatile uint32_t debug_boot_stage = 0;
 volatile uint32_t debug_general_run_count = 0;
 #endif
 
+volatile uint32_t debug_chassis_dt_ms = 0U;
+volatile uint32_t debug_chassis_dt_max_ms = 0U;
+volatile uint32_t debug_chassis_late_count = 0U;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -88,6 +122,11 @@ static void MX_ADC1_Init(void);
 static void MX_I2C3_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART3_UART_Init(void);
+void StartImuTask(void *argument);
+void StartWheelTask(void *argument);
+void StartGeneralTask(void *argument);
+void StartTelemetryTask(void *argument);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -111,21 +150,21 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  //HAL_Init();
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
 
   /* Configure the system clock */
-  //SystemClock_Config();
+  SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  /*MX_GPIO_Init();
+  MX_GPIO_Init();
   MX_DMA_Init();
   MX_TIM1_Init();
   MX_IWDG_Init();
@@ -137,9 +176,9 @@ int main(void)
   MX_ADC1_Init();
   MX_I2C3_Init();
   MX_USART2_UART_Init();
-  MX_USART3_UART_Init();*/
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-  DEBUG_BOOT_STAGE(1);
+  /*DEBUG_BOOT_STAGE(1);
   HAL_Init();
 
   DEBUG_BOOT_STAGE(2);
@@ -182,25 +221,71 @@ int main(void)
   MX_USART2_UART_Init();
 
   DEBUG_BOOT_STAGE(15);
-  MX_USART3_UART_Init();
+  MX_USART3_UART_Init();*/
 
   DEBUG_BOOT_STAGE(20);
   General_Init();
 
   DEBUG_BOOT_STAGE(21);
+  Telemetry_Init();
   //MainWheels_Init();
   /* USER CODE END 2 */
+
+  /* Init scheduler */
+  osKernelInitialize();
+
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* creation of ImuTask */
+  ImuTaskHandle = osThreadNew(StartImuTask, NULL, &ImuTask_attributes);
+
+  /* creation of WheelTask */
+  WheelTaskHandle = osThreadNew(StartWheelTask, NULL, &WheelTask_attributes);
+
+  /* creation of GeneralTask */
+  GeneralTaskHandle = osThreadNew(StartGeneralTask, NULL, &GeneralTask_attributes);
+
+  /* creation of TelemetryTask */
+  TelemetryTaskHandle = osThreadNew(StartTelemetryTask, NULL, &TelemetryTask_attributes);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* USER CODE BEGIN RTOS_EVENTS */
+  /* add events, ... */
+  /* USER CODE END RTOS_EVENTS */
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  /*
 	    DEBUG_GENERAL_RUN_COUNT_INC();
-
 	    DEBUG_BOOT_STAGE(22);
 	    General_Run();
-
 	    DEBUG_BOOT_STAGE(23);
+	    */
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -356,7 +441,7 @@ static void MX_I2C2_Init(void)
 
   /* USER CODE END I2C2_Init 1 */
   hi2c2.Instance = I2C2;
-  hi2c2.Init.ClockSpeed = 400000;
+  hi2c2.Init.ClockSpeed = 100000;
   hi2c2.Init.DutyCycle = I2C_DUTYCYCLE_2;
   hi2c2.Init.OwnAddress1 = 0;
   hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
@@ -751,20 +836,23 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Stream1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
   /* DMA1_Stream2_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream2_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream2_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream2_IRQn);
-  /* DMA1_Stream3_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
   /* DMA1_Stream4_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
+  /* DMA1_Stream5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
   /* DMA1_Stream6_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
+  /* DMA1_Stream7_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream7_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream7_IRQn);
 
 }
 
@@ -851,7 +939,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(MSD_RPM_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
@@ -862,6 +950,138 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartImuTask */
+/**
+  * @brief  Function implementing the ImuTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartImuTask */
+void StartImuTask(void *argument)
+{
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+    (void)argument;
+
+    for (;;)
+    {
+        IMU_Process();
+        osDelay(1);
+    }
+  /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_StartWheelTask */
+/**
+* @brief Function implementing the WheelTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartWheelTask */
+void StartWheelTask(void *argument)
+{
+  /* USER CODE BEGIN StartWheelTask */
+  /* Infinite loop */
+    (void)argument;
+
+    uint32_t next_wake = osKernelGetTickCount();
+    uint32_t previous_update = next_wake;
+
+    for (;;)
+    {
+    	uint32_t now = osKernelGetTickCount();
+		uint32_t dt = now - previous_update;
+
+		debug_chassis_dt_ms = dt;
+
+		if (dt > debug_chassis_dt_max_ms)
+		{
+			debug_chassis_dt_max_ms = dt;
+		}
+
+		if (dt > 25U)
+		{
+			debug_chassis_late_count++;
+		}
+
+		previous_update = now;
+
+        Chassis_Update();
+
+        next_wake += 20U;
+        (void)osDelayUntil(next_wake);
+    }
+  /* USER CODE END StartWheelTask */
+}
+
+/* USER CODE BEGIN Header_StartGeneralTask */
+/**
+* @brief Function implementing the GeneralTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartGeneralTask */
+void StartGeneralTask(void *argument)
+{
+  /* USER CODE BEGIN StartGeneralTask */
+  /* Infinite loop */
+    (void)argument;
+
+    for (;;)
+    {
+        General_Run();
+        osDelay(1);
+    }
+  /* USER CODE END StartGeneralTask */
+}
+
+/* USER CODE BEGIN Header_StartTelemetryTask */
+/**
+* @brief Function implementing the TelemetryTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTelemetryTask */
+void StartTelemetryTask(void *argument)
+{
+  /* USER CODE BEGIN StartTelemetryTask */
+  /* Infinite loop */
+    (void)argument;
+
+    uint32_t next_wake = osKernelGetTickCount();
+
+    for (;;)
+    {
+        Telemetry_TaskStep();
+
+        next_wake += 20U;  /* 50 Hz */
+        (void)osDelayUntil(next_wake);
+    }
+  /* USER CODE END StartTelemetryTask */
+}
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM6 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM6)
+  {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

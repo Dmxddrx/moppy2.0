@@ -1,9 +1,5 @@
 #include "general.h"
 
-volatile uint32_t debug_chassis_dt_ms = 0U;
-volatile uint32_t debug_chassis_dt_max_ms = 0U;
-volatile uint32_t debug_chassis_late_count = 0U;
-
 void General_Init(void)
 {
 	IMU_Init();
@@ -56,15 +52,22 @@ void General_Init(void)
 
 }
 
+/*
+ * GeneralTask responsibilities:
+ * - Button processing and GUI navigation
+ * - Brush ramp updates
+ * - LiDAR motor PID updates
+ * - OLED refresh
+ *
+ * IMU_Process() belongs to ImuTask.
+ * Chassis_Update() belongs to WheelTask.
+ */
 void General_Run(void)
 {
     HAL_IWDG_Refresh(&hiwdg);
 
     uint32_t current_time = HAL_GetTick();
-
     static uint32_t last_display_update = 0;
-    static uint32_t last_chassis_update = 0U;
-    static uint8_t chassis_timer_started = 0U;
 
     DEBUG_BOOT_STAGE(50);
 
@@ -83,36 +86,7 @@ void General_Run(void)
         last_display_update = 0;
     }
 
-    /* --- 2. DETERMINISTIC CHASSIS CONTROL --- */
-    // Execute the PID loop strictly every 20ms to satisfy the Δt requirement
 
-    if (chassis_timer_started == 0U)
-    {
-        last_chassis_update = current_time;
-        chassis_timer_started = 1U;
-    }
-    else if ((uint32_t)(current_time - last_chassis_update) >= 20U)
-    {
-        uint32_t dt_ms = current_time - last_chassis_update;
-
-        debug_chassis_dt_ms = dt_ms;
-
-        if (dt_ms > debug_chassis_dt_max_ms)
-        {
-            debug_chassis_dt_max_ms = dt_ms;
-        }
-
-        if (dt_ms > 25U)
-        {
-            debug_chassis_late_count++;
-        }
-
-        last_chassis_update = current_time;
-
-        Chassis_Update();
-    }
-
-    IMU_Process();
     /* --- 3. BRUSH & LIDAR SOFT START UPDATES --- */
 	// Continuously step the PWM towards the targets set in initialization
     DEBUG_BOOT_STAGE(53);

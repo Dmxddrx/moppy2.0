@@ -1,2 +1,12 @@
-Before FreeRTOS:
-IMU configurations done.
+feat(rtos): add dedicated tasks and motion command support
+
+- Add dedicated IMU, wheel control, general control, and telemetry tasks.
+- Move IMU processing into ImuTask.
+- Run chassis control periodically in WheelTask at 20 ms intervals.
+- Add motion command support for forward/reverse movement and adjustable left/right turning.
+- Support differential-drive wheel speed targets for coordinated movement.
+- Move chassis timing diagnostics into WheelTask.
+- Keep button handling, brush control, LiDAR PID, and OLED updates in GeneralTask.
+- Initialize robot peripherals before starting the RTOS scheduler.
+- Prepare TelemetryTask for Raspberry Pi communication and navigation commands.
+- Maintain watchdog servicing during general control execution.

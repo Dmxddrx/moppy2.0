@@ -55,6 +55,69 @@ void Chassis_SetTargetSpeed(int16_t left_ticks_per_loop, int16_t right_ticks_per
     final_target_ticks_R = right_ticks_per_loop;
 }
 
+#include <math.h>
+
+/* Measure this on Moppy 2.0: centre of left wheel
+   to centre of right wheel, in centimetres. */
+#define CHASSIS_TRACK_WIDTH_CM          24.0f
+
+/* WheelTask / Chassis_Update period */
+#define CHASSIS_CONTROL_PERIOD_S         0.020f
+
+/* Initial limit; tune from measured encoder data. */
+#define CHASSIS_MAX_TARGET_TICKS_PER_LOOP 200.0f
+
+void Chassis_SetVelocity(float linear_cm_s,
+                         float angular_deg_s)
+{
+    const float deg_to_rad = 0.01745329252f;
+
+    const float ticks_per_cm =
+        TICKS_PER_REVOLUTION / WHEEL_CIRCUMFERENCE_CM;
+
+    /* Convert requested turn rate into radians per second. */
+    const float omega_rad_s =
+        angular_deg_s * deg_to_rad;
+
+    /* Positive angular velocity means turning left. */
+    const float half_track =
+        CHASSIS_TRACK_WIDTH_CM * 0.5f;
+
+    const float left_cm_s =
+        linear_cm_s - (omega_rad_s * half_track);
+
+    const float right_cm_s =
+        linear_cm_s + (omega_rad_s * half_track);
+
+    /* Convert wheel velocities to ticks per 20 ms loop. */
+    float left_ticks =
+        left_cm_s * ticks_per_cm * CHASSIS_CONTROL_PERIOD_S;
+
+    float right_ticks =
+        right_cm_s * ticks_per_cm * CHASSIS_CONTROL_PERIOD_S;
+
+    /*
+     * Scale both wheels together if over the configured
+     * limit. This preserves the requested turning ratio.
+     */
+    float max_ticks = fmaxf(fabsf(left_ticks),
+                            fabsf(right_ticks));
+
+    if (max_ticks > CHASSIS_MAX_TARGET_TICKS_PER_LOOP)
+    {
+        float scale =
+            CHASSIS_MAX_TARGET_TICKS_PER_LOOP / max_ticks;
+
+        left_ticks *= scale;
+        right_ticks *= scale;
+    }
+
+    Chassis_SetTargetSpeed(
+        (int16_t)lroundf(left_ticks),
+        (int16_t)lroundf(right_ticks)
+    );
+}
+
 void Chassis_ResetOdometry(void)
 {
     total_distance_cm = 0.0f; //[cite: 16]

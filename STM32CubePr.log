@@ -1,0 +1,32 @@
+02:59:11 : STM32CubeProgrammer API v2.23.0 | Windows-64Bits 
+02:59:13 : UR connection mode is defined with the SWrst reset mode
+02:59:13 : ST-LINK SN  : 37FF71064E573436CE5C1843
+02:59:13 : ST-LINK FW  : V2J48S7
+02:59:13 : Board       : --
+02:59:13 : Voltage     : 3.24V
+02:59:13 : SWD freq    : 4000 KHz
+02:59:13 : Connect mode: Normal
+02:59:13 : Reset mode  : Software reset
+02:59:13 : Device ID   : 0x413
+02:59:13 : Revision ID : --
+02:59:13 : Debug in Low Power mode is not supported for this device.
+02:59:14 : UPLOADING OPTION BYTES DATA ...
+02:59:14 :   Bank          : 0x00
+02:59:14 :   Address       : 0x40023c14 
+02:59:14 :   Size          : 4 Bytes
+02:59:14 : UPLOADING ...
+02:59:14 :   Size          : 1024 Bytes
+02:59:14 :   Address       : 0x8000000
+02:59:14 : Read progress:
+02:59:14 : Data read successfully
+02:59:14 : Time elapsed during the read operation is: 00:00:00.007
+02:59:44 : Opening and parsing file: Moppy2.0.elf
+02:59:44 : Memory Programming ...
+02:59:44 :   File          : Moppy2.0.elf
+02:59:44 :   Size          : 67.70 KB 
+02:59:44 :   Address       : 0x08000000
+02:59:44 : Erasing memory corresponding to segment 0:
+02:59:45 : Erasing internal memory sectors [0 4]
+02:59:46 : Download in Progress:
+02:59:47 : File download complete
+02:59:47 : Time elapsed during download operation: 00:00:02.057

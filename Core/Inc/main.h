@@ -69,6 +69,10 @@ void Error_Handler(void);
 #define M2_BIN1_GPIO_Port GPIOC
 #define M1_AIN1_Pin GPIO_PIN_1
 #define M1_AIN1_GPIO_Port GPIOC
+#define R_Pi_RX_Pin GPIO_PIN_2
+#define R_Pi_RX_GPIO_Port GPIOA
+#define R_Pi_TX_Pin GPIO_PIN_3
+#define R_Pi_TX_GPIO_Port GPIOA
 #define M2_BIN2_Pin GPIO_PIN_4
 #define M2_BIN2_GPIO_Port GPIOA
 #define M1_AIN2_Pin GPIO_PIN_5
@@ -119,6 +123,8 @@ void Error_Handler(void);
 #define IMU_SDA_GPIO_Port GPIOC
 #define IMU_SCL_Pin GPIO_PIN_8
 #define IMU_SCL_GPIO_Port GPIOA
+#define LidarTX_Pin GPIO_PIN_11
+#define LidarTX_GPIO_Port GPIOC
 #define MSD_RPM_Pin GPIO_PIN_0
 #define MSD_RPM_GPIO_Port GPIOD
 #define MSD_RPM_EXTI_IRQn EXTI0_IRQn
@@ -129,7 +135,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 #define LIDAR_DIAGNOSTICS       0
-#define IMU_DIAGNOSTICS         0
+#define IMU_DIAGNOSTICS         1
 #define DEBUG_BOOT_STAGES       0
 #define DEBUG_GENERAL_RUN_COUNT 0
 

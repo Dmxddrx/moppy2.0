@@ -45,12 +45,16 @@ typedef struct
 
     uint32_t mpu_timestamp_ms;
     uint32_t hmc_timestamp_ms;
+
+    float yaw_deg;
+    bool yaw_valid;
 } IMU_Data;
 
 void IMU_Init(void);
 void IMU_Process(void);
 
 const IMU_Data *IMU_GetData(void);
+void IMU_GetDataSnapshot(IMU_Data *snapshot);
 
 /* Called by the existing HAL callbacks. */
 void IMU_OnMemRxCplt(I2C_HandleTypeDef *hi2c);

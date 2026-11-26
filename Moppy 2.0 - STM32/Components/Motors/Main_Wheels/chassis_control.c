@@ -1,4 +1,6 @@
 #include "chassis_control.h"
+#include "imu_manager.h"
+#include <math.h>
 
 // Global Odometry Variables[cite: 16]
 float total_distance_cm = 0.0f;
@@ -29,6 +31,37 @@ const float Ki = 0.05f; //[cite: 16]
 const float Kd = 0.5f; //[cite: 16]
 const float ACCEL_STEP = 2.0f; // Max target change per 20ms loop (Higher = steeper acceleration)
 
+/* Initial turn-control settings; tune on the real chassis. */
+#define TURN_ANGLE_TOLERANCE_DEG   1.5f
+#define TURN_SETTLE_RATE_DPS       3.0f
+#define TURN_CONTROL_KP             2.0f
+
+#define TURN_MIN_RATE_DPS           5.0f
+#define TURN_MAX_RATE_DPS          90.0f
+#define TURN_MAX_ANGLE_DEG         360.0f
+
+#define TURN_SENSOR_TIMEOUT_MS     100U
+#define TURN_SETTLE_SAMPLES          5U
+#define TURN_TIMEOUT_MARGIN_MS   3000U
+
+typedef enum
+{
+    MOTION_IDLE = 0,
+    MOTION_TURNING,
+    MOTION_DONE,
+    MOTION_FAULT
+} ChassisMotionState;
+
+static ChassisMotionState motion_state = MOTION_IDLE;
+
+static float turn_target_yaw_deg = 0.0f;
+static float turn_max_rate_dps = 0.0f;
+
+static uint32_t turn_started_ms = 0U;
+static uint32_t turn_timeout_ms = 0U;
+
+static uint8_t turn_settle_count = 0U;
+
 void Chassis_Init(void)
 {
     // 1. Synchronize initial encoder baselines[cite: 16]
@@ -46,6 +79,9 @@ void Chassis_Init(void)
     final_target_ticks_R = 0;
     current_target_ticks_L = 0.0f;
     current_target_ticks_R = 0.0f;
+
+    motion_state = MOTION_IDLE;
+    turn_settle_count = 0U;
 }
 
 void Chassis_SetTargetSpeed(int16_t left_ticks_per_loop, int16_t right_ticks_per_loop)
@@ -55,7 +91,6 @@ void Chassis_SetTargetSpeed(int16_t left_ticks_per_loop, int16_t right_ticks_per
     final_target_ticks_R = right_ticks_per_loop;
 }
 
-#include <math.h>
 
 /* Measure this on Moppy 2.0: centre of left wheel
    to centre of right wheel, in centimetres. */
@@ -193,4 +228,181 @@ void Chassis_Update(void)
     // Apply motor speeds[cite: 16]
     MainWheels_SetLeftSpeed(pwm_L);
     MainWheels_SetRightSpeed(pwm_R);
+}
+static void Chassis_MotionStopNow(void)
+{
+    final_target_ticks_L = 0;
+    final_target_ticks_R = 0;
+
+    current_target_ticks_L = 0.0f;
+    current_target_ticks_R = 0.0f;
+
+    integral_L = 0.0f;
+    integral_R = 0.0f;
+
+    last_error_L = 0;
+    last_error_R = 0;
+
+    MainWheels_Stop();
+}
+
+bool Chassis_StartTurn(float angle_deg,
+                       float max_rate_deg_s)
+{
+    IMU_Data imu;
+    uint32_t now = HAL_GetTick();
+
+    if (motion_state == MOTION_TURNING)
+    {
+        return false;
+    }
+
+    if (!isfinite(angle_deg) ||
+        !isfinite(max_rate_deg_s) ||
+        (fabsf(angle_deg) < 0.1f) ||
+        (fabsf(angle_deg) > TURN_MAX_ANGLE_DEG) ||
+        (max_rate_deg_s < TURN_MIN_RATE_DPS) ||
+        (max_rate_deg_s > TURN_MAX_RATE_DPS))
+    {
+        return false;
+    }
+
+    IMU_GetDataSnapshot(&imu);
+
+    /*
+     * Do not start a closed-loop turn without recent,
+     * valid gyroscope-derived yaw data.
+     */
+    if (!imu.mpu_data_valid ||
+        !imu.yaw_valid ||
+        ((uint32_t)(now - imu.mpu_timestamp_ms) >
+         TURN_SENSOR_TIMEOUT_MS))
+    {
+        return false;
+    }
+
+    /* Positive angles request left turns. */
+    turn_target_yaw_deg = imu.yaw_deg + angle_deg;
+
+    turn_max_rate_dps = max_rate_deg_s;
+    turn_started_ms = now;
+
+    /*
+     * Allow approximately twice the nominal turn duration
+     * plus a margin for acceleration and settling.
+     */
+    turn_timeout_ms =
+        (uint32_t)((fabsf(angle_deg) /
+                    max_rate_deg_s) * 2000.0f)
+        + TURN_TIMEOUT_MARGIN_MS;
+
+    turn_settle_count = 0U;
+    motion_state = MOTION_TURNING;
+
+    return true;
+}
+
+void Chassis_MotionUpdate(void)
+{
+    if (motion_state != MOTION_TURNING)
+    {
+        return;
+    }
+
+    IMU_Data imu;
+    uint32_t now = HAL_GetTick();
+
+    IMU_GetDataSnapshot(&imu);
+
+    /* Fail safely if the yaw feedback becomes unreliable. */
+    if (!imu.mpu_data_valid ||
+        !imu.yaw_valid ||
+        ((uint32_t)(now - imu.mpu_timestamp_ms) >
+         TURN_SENSOR_TIMEOUT_MS))
+    {
+        Chassis_MotionStopNow();
+        motion_state = MOTION_FAULT;
+        return;
+    }
+
+    /* Prevent an unsuccessful turn from running indefinitely. */
+    if ((uint32_t)(now - turn_started_ms) >= turn_timeout_ms)
+    {
+        Chassis_MotionStopNow();
+        motion_state = MOTION_FAULT;
+        return;
+    }
+
+    float error_deg =
+        turn_target_yaw_deg - imu.yaw_deg;
+
+    float abs_error_deg = fabsf(error_deg);
+    float gyro_z_dps = imu.mpu_physical.gz;
+
+    /*
+     * Once close to the target, request zero angular speed.
+     * The existing wheel-speed ramp helps decelerate the robot.
+     */
+    if (abs_error_deg <= TURN_ANGLE_TOLERANCE_DEG)
+    {
+        Chassis_SetVelocity(0.0f, 0.0f);
+
+        if (fabsf(gyro_z_dps) <= TURN_SETTLE_RATE_DPS)
+        {
+            if (turn_settle_count < TURN_SETTLE_SAMPLES)
+            {
+                turn_settle_count++;
+            }
+
+            if (turn_settle_count >= TURN_SETTLE_SAMPLES)
+            {
+                motion_state = MOTION_DONE;
+            }
+        }
+        else
+        {
+            turn_settle_count = 0U;
+        }
+
+        return;
+    }
+
+    turn_settle_count = 0U;
+
+    /*
+     * Proportional angular-speed control:
+     * larger angle error -> faster turn;
+     * smaller angle error -> slower turn.
+     */
+    float angular_rate_cmd =
+        TURN_CONTROL_KP * error_deg;
+
+    if (angular_rate_cmd > turn_max_rate_dps)
+    {
+        angular_rate_cmd = turn_max_rate_dps;
+    }
+    else if (angular_rate_cmd < -turn_max_rate_dps)
+    {
+        angular_rate_cmd = -turn_max_rate_dps;
+    }
+
+    Chassis_SetVelocity(0.0f, angular_rate_cmd);
+}
+
+bool Chassis_MotionIsDone(void)
+{
+    return (motion_state != MOTION_TURNING);
+}
+
+bool Chassis_MotionHasFault(void)
+{
+    return (motion_state == MOTION_FAULT);
+}
+
+void Chassis_CancelMotion(void)
+{
+    Chassis_MotionStopNow();
+
+    turn_settle_count = 0U;
+    motion_state = MOTION_IDLE;
 }

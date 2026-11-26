@@ -1007,6 +1007,7 @@ void StartWheelTask(void *argument)
 
 		previous_update = now;
 
+		Chassis_MotionUpdate();
         Chassis_Update();
 
         next_wake += 20U;

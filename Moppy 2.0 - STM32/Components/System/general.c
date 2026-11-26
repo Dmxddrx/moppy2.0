@@ -45,7 +45,7 @@ void General_Init(void)
     }
 
     // Set a baseline forward speed for testing your PID and encoders
-    Chassis_SetTargetSpeed(200, 200);
+    Chassis_SetTargetSpeed(0, 0);
     // Set target speeds for the cleaning hardware ONCE
 	SideBrushes_Start(400);
 	RollerBrush_Start(400);

@@ -1,4 +1,6 @@
 #include "imu_manager.h"
+#include <math.h>
+#include <stddef.h>
 
 #define IMU_TRANSFER_TIMEOUT_MS  50U
 #define IMU_RETRY_DELAY_MS       250U
@@ -11,6 +13,11 @@ extern I2C_HandleTypeDef hi2c3;
 #define IMU_SAMPLE_INTERVAL_MS  10U
 
 static IMU_Data imu_data;
+static uint32_t last_yaw_sample_ms = 0U;
+static uint8_t yaw_time_initialized = 0U;
+
+#define YAW_GYRO_DEADBAND_DPS  0.5f
+#define YAW_MAX_SAMPLE_GAP_MS  100U
 
 static uint8_t mpu_dma_buf[14];
 static uint8_t hmc_dma_buf[6];
@@ -77,6 +84,27 @@ const IMU_Data *IMU_GetData(void)
     return &imu_data;
 }
 
+void IMU_GetDataSnapshot(IMU_Data *snapshot)
+{
+    if (snapshot == NULL)
+    {
+        return;
+    }
+
+    /*
+     * Copy the structure without allowing a task switch
+     * halfway through the copy.
+     */
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+
+    *snapshot = imu_data;
+
+    if (primask == 0U)
+    {
+        __enable_irq();
+    }
+}
 
 void IMU_Init(void)
 {
@@ -109,6 +137,12 @@ void IMU_Init(void)
 
     imu_data.mpu_data_valid = false;
     imu_data.hmc_data_valid = false;
+
+    imu_data.yaw_deg = 0.0f;
+    imu_data.yaw_valid = false;
+
+    last_yaw_sample_ms = 0U;
+    yaw_time_initialized = 0U;
 
     bus_state = IMU_BUS_IDLE;
     dma_complete_pending = 0U;
@@ -172,11 +206,12 @@ void IMU_Process(void)
         bus_state = IMU_BUS_IDLE;
 
         imu_data.mpu_data_valid = false;
+        imu_data.yaw_valid = false;
         imu_data.hmc_data_valid = false;
 
-#if IMU_DIAGNOSTICS
+
         bool recovery_ok = I2C3_RecoverBus();
-#endif
+
 
         IMU_DBG_INC(imu_dbg_recovery_count);
         IMU_DBG_SET(imu_dbg_last_recovery_ok,
@@ -199,12 +234,58 @@ void IMU_Process(void)
 
         if (bus_state == IMU_BUS_MPU)
         {
-            MPU6050_ParseDMA(mpu_dma_buf, &imu_data.mpu_raw);
+        	MPU6050_ParseDMA(mpu_dma_buf, &imu_data.mpu_raw);
 
-            imu_data.mpu_physical =
-                MPU6050_GetPhysical(&imu_data.mpu_raw);
+        	imu_data.mpu_physical =
+        	    MPU6050_GetPhysical(&imu_data.mpu_raw);
 
-            uint32_t sample_time = HAL_GetTick();
+        	uint32_t sample_time = HAL_GetTick();
+
+        	/*
+        	 * Relative yaw estimation.
+        	 *
+        	 * MPU6050_GetPhysical() already applies the calibrated
+        	 * gyro bias and converts gz to degrees per second.
+        	 */
+        	if (yaw_time_initialized == 0U)
+        	{
+        	    /* First sample establishes the time reference. */
+        	    last_yaw_sample_ms = sample_time;
+        	    yaw_time_initialized = 1U;
+
+        	    imu_data.yaw_valid = true;
+        	}
+        	else
+        	{
+        	    uint32_t dt_ms = sample_time - last_yaw_sample_ms;
+
+        	    last_yaw_sample_ms = sample_time;
+
+        	    if ((dt_ms > 0U) &&
+        	        (dt_ms <= YAW_MAX_SAMPLE_GAP_MS))
+        	    {
+        	        float gyro_z_dps = imu_data.mpu_physical.gz;
+
+        	        /* Reduce integration of small residual gyro noise. */
+        	        if (fabsf(gyro_z_dps) < YAW_GYRO_DEADBAND_DPS)
+        	        {
+        	            gyro_z_dps = 0.0f;
+        	        }
+
+        	        imu_data.yaw_deg +=
+        	            gyro_z_dps * ((float)dt_ms * 0.001f);
+
+        	        imu_data.yaw_valid = true;
+        	    }
+        	    else
+        	    {
+        	        /*
+        	         * Do not integrate across a long or invalid gap.
+        	         * The next normal sample can restore validity.
+        	         */
+        	        imu_data.yaw_valid = false;
+        	    }
+        	}
 
         #if IMU_DIAGNOSTICS
             if (imu_dbg_mpu_samples > 0U)

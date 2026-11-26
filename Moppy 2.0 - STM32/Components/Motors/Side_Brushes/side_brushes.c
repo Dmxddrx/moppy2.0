@@ -8,12 +8,22 @@ static uint32_t last_ramp_time = 0;
 
 void SideBrushes_Init(void)
 {
-    // 1. Enable Motor Driver 2 by pulling MD2_STBY high
-    HAL_GPIO_WritePin(MD2_STBY_GPIO_Port, MD2_STBY_Pin, GPIO_PIN_SET);
+    /*
+     * STAGE 0:
+     * Disable the side-brush motor driver during boot.
+     */
+    HAL_GPIO_WritePin(
+        MD2_STBY_GPIO_Port,
+        MD2_STBY_Pin,
+        GPIO_PIN_RESET
+    );
 
-    // 2. Start PWM signals for Left (CH3) and Right (CH4) on TIM3[cite: 72]
+    // Start PWM channels for M3 and M4.
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+
+    // Ensure both brushes have zero target and actual output.
+    SideBrushes_Stop();
 }
 
 void SideBrushes_SetLeftSpeed(uint16_t speed)

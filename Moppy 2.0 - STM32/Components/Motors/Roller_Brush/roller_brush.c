@@ -6,11 +6,27 @@ static uint32_t last_ramp_time = 0;
 
 void RollerBrush_Init(void)
 {
-    // 1. Enable Motor Driver 3 by pulling MD3_STBY high
-    HAL_GPIO_WritePin(MD3_STBY_GPIO_Port, MD3_STBY_Pin, GPIO_PIN_SET);
+    /*
+     * MD3 controls BOTH:
+     * M5 = Roller Brush
+     * M6 = LiDAR Motor
+     *
+     * Keep MD3 enabled because the LiDAR motor needs it.
+     * M5 will remain disabled through zero PWM and low
+     * direction inputs.
+     */
 
-    // 2. Start PWM signal for the Roller Brush (TIM4, CH4)[cite: 70]
+    HAL_GPIO_WritePin(
+        MD3_STBY_GPIO_Port,
+        MD3_STBY_Pin,
+        GPIO_PIN_SET
+    );
+
+    // Start PWM for the roller brush.
     HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_4);
+
+    // Keep M5 stopped while M6 is available for LiDAR.
+    RollerBrush_Stop();
 }
 
 void RollerBrush_Start(uint16_t speed)

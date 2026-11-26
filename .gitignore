@@ -6,6 +6,7 @@ build/
 # Eclipse/STM32CubeIDE user-specific settings
 .settings/
 *.launch
+DOCS/
 
 # Compiled Object files
 *.slo

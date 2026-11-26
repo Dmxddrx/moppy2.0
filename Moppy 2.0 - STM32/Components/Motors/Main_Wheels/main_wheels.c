@@ -2,16 +2,27 @@
 
 void MainWheels_Init(void)
 {
-    // 1. Enable Motor Driver 1 by pulling MD1_STBY high
-    HAL_GPIO_WritePin(MD1_STBY_GPIO_Port, MD1_STBY_Pin, GPIO_PIN_SET);
+    /*
+     * STAGE 0:
+     * Keep the main drive motor driver disabled during boot.
+     * MD1 will only be enabled by a future safety/arming manager.
+     */
+    HAL_GPIO_WritePin(
+        MD1_STBY_GPIO_Port,
+        MD1_STBY_Pin,
+        GPIO_PIN_RESET
+    );
 
-    // 2. Start PWM signals for Right/M2 (CH1) and Left/M1 (CH2)
+    // Start PWM signals for Right/M2 (CH1) and Left/M1 (CH2).
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
 
-    // 3. Start Hardware Encoders in Interrupt Mode for 32/64-bit odometry tracking
+    // Start the hardware encoder interfaces.
     HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
     HAL_TIM_Encoder_Start(&htim8, TIM_CHANNEL_ALL);
+
+    // Ensure both wheels start with zero output.
+    MainWheels_Stop();
 }
 
 /* ==================================================================== */

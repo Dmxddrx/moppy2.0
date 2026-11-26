@@ -2,16 +2,33 @@
 
 void General_Init(void)
 {
-	IMU_Init();
-    /* 1. Activate TB6612FNG Motor Driver 1 (Main Wheels) */
-	 /* Enable main wheel motor driver after IMU initialization. */
-		HAL_GPIO_WritePin(
-			MD1_STBY_GPIO_Port,
-			MD1_STBY_Pin,
-			GPIO_PIN_SET
-		);
+    /*
+     * ============================================================
+     * STAGE 0: SAFE STARTUP
+     * ============================================================
+     *
+     * Main drive and side-brush drivers must remain disabled.
+     * The LiDAR driver is enabled later because it also drives
+     * the roller-brush channel.
+     */
 
-    /* 2. Initialize Subsystems */
+    HAL_GPIO_WritePin(
+        MD1_STBY_GPIO_Port,
+        MD1_STBY_Pin,
+        GPIO_PIN_RESET
+    );
+
+    HAL_GPIO_WritePin(
+        MD2_STBY_GPIO_Port,
+        MD2_STBY_Pin,
+        GPIO_PIN_RESET
+    );
+
+    // 1. Initialize IMU.
+    DEBUG_BOOT_STAGE(29);
+    IMU_Init();
+
+    // 2. Initialize motor and sensor subsystems.
     DEBUG_BOOT_STAGE(30);
     MainWheels_Init();
 
@@ -24,9 +41,14 @@ void General_Init(void)
     DEBUG_BOOT_STAGE(33);
     LidarMotor_Init();
 
+    // 3. Initialize chassis controller with zero targets.
     DEBUG_BOOT_STAGE(34);
     Chassis_Init();
 
+    Chassis_SetTargetSpeed(0, 0);
+    MainWheels_Stop();
+
+    // 4. Initialize user interface.
     DEBUG_BOOT_STAGE(35);
     BTNS_Init();
 
@@ -34,22 +56,30 @@ void General_Init(void)
     OLED_Init(&hi2c1);
 
     OLED_Clear();
+
     OLED_Print(10, 20, "MOPPY 2.0 BOOTING");
-    OLED_Print(10, 35, "WHEELS ENABLED");
+    OLED_Print(10, 35, "DRIVE DISARMED");
+
     OLED_Update();
 
-    // 1-second boot delay to allow hardware to stabilize[cite: 54]
-    for (int i = 0; i < 10; i++) {
+    // 5. Allow hardware to stabilize.
+    for (int i = 0; i < 10; i++)
+    {
         HAL_Delay(100);
         HAL_IWDG_Refresh(&hiwdg);
     }
 
-    // Set a baseline forward speed for testing your PID and encoders
-    Chassis_SetTargetSpeed(0, 0);
-    // Set target speeds for the cleaning hardware ONCE
-	SideBrushes_Start(400);
-	RollerBrush_Start(400);
-
+    /*
+     * STAGE 0 EXPECTED STATE:
+     *
+     * Main wheels : OFF
+     * Side brushes: OFF
+     * Roller brush: OFF
+     * LiDAR motor : Available
+     * Vacuum      : OFF
+     *
+     * No cleaning or driving motors are started automatically.
+     */
 }
 
 /*

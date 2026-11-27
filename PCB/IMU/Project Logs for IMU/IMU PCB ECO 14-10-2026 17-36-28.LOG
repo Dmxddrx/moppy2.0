@@ -1,0 +1,3 @@
+Change Component Footprint: Designator=J1 Old Footprint=4 POS New Footprint=5 POS HMC
+Added Member To Class: ClassName=IMU Member=Component C? 10uF
+Added Member To Class: ClassName=IMU Member=Component C? 10uF

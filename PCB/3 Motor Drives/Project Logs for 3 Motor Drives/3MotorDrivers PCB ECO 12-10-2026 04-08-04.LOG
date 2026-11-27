@@ -1,0 +1,162 @@
+Added Component: Designator=MD2(TB6612FNG)
+Add component (AddParameter): Name = "Approvals"; Value = "UL"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Category"; Value = "Terminal Blocks"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "China RoHS"; Value = "Compliant"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Color"; Value = "Black"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1Description"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-66579491.pdf?src-supplier=element14+APAC"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1URL"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-66579491.pdf?src-supplier=element14+APAC"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink2Description"; Value = "https://datasheet.octopart.com:443/PST-1.0/8-3.5-Phoenix-Contact-datasheet-8822167.pdf?src-supplier=element14+APAC"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink2URL"; Value = "https://datasheet.octopart.com:443/PST-1.0/8-3.5-Phoenix-Contact-datasheet-8822167.pdf?src-supplier=element14+APAC"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink3Description"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-175456693.pdf?src-supplier=Master+Electronics"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink3URL"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-175456693.pdf?src-supplier=Master+Electronics"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink4Description"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-154783991.pdf?src-supplier=Electro+Sonic"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink4URL"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-154783991.pdf?src-supplier=Electro+Sonic"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink5Description"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-33525158.pdf?src-supplier=MRO+Stop"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink5URL"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-33525158.pdf?src-supplier=MRO+Stop"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink6Description"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-164875081.pdf?src-supplier=Burklin+Elektronik"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink6URL"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-164875081.pdf?src-supplier=Burklin+Elektronik"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink7Description"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-54101.pdf?src-supplier=DigiKey"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink7URL"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-54101.pdf?src-supplier=DigiKey"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink8Description"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-94777.pdf?src-supplier=RS+(Formerly+Allied+Electronics)"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink8URL"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-94777.pdf?src-supplier=RS+(Formerly+Allied+Electronics)"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink9Description"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-62084791.pdf?src-supplier=RS+(Formerly+Allied+Electronics)"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink9URL"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-62084791.pdf?src-supplier=RS+(Formerly+Allied+Electronics)"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink10Description"; Value = "http://sigma.octopart.com:80/195219851/materials_sheet/Phoenix-Contact-1945151.pdf?src-supplier=Compliance+Statements"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink10URL"; Value = "http://sigma.octopart.com:80/195219851/materials_sheet/Phoenix-Contact-1945151.pdf?src-supplier=Compliance+Statements"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Contact Plating"; Value = "Tin"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Contact Resistance"; Value = "1.8mO"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Country of Origin"; Value = "Germany"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Current"; Value = "10A"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Current Rating"; Value = "8A"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Depth"; Value = "2.8mm"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Export Control Classification Number (ECCN) Code"; Value = "EAR99"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Flammability Rating"; Value = "UL94 V-0"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Harmonized Tariff Schedule (HTS) Code"; Value = "8536.90.40.00"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Housing Color"; Value = "Black"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Introduction Date"; Value = "2002-11-26"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Lead Free"; Value = "Lead Free"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Lifecycle Status"; Value = "Production"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer"; Value = "Phoenix Contact"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer Lifecycle Status"; Value = "AVAILABLE"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer Part Number"; Value = "1945151"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Max Current Rating"; Value = "6A"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Mounting Technology"; Value = "Solder"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Number of Contacts"; Value = "8"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Number of Levels"; Value = "1"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Number of Positions"; Value = "8"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Number of Positions Per Level"; Value = "8"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Number of Rows"; Value = "1"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Orientation"; Value = "Straight"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Packaging"; Value = "Bulk"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Pins"; Value = "8"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Pitch"; Value = "3.5mm"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Pricing"; Value = "1=0.76, 10=0.76, 50=0.76, 100=0.76, 1000=0.76, 10000=0.76 (USD)"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "REACH SVHC"; Value = "Unaffected"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "RoHS"; Value = "Compliant"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Stock"; Value = "5397"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Supplier"; Value = "Mouser"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Supplier Part Number"; Value = "651-1945151"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Termination"; Value = "Solder"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Voltage"; Value = "300V"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Voltage Rating"; Value = "160V"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Weight"; Value = "869.990166mg"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Width"; Value = "24.5mm"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Wire/Cable Gauge"; Value = "20AWG"; VariantName = "[No Variations]"
+Added Component: Designator=MD3(TB6612FNG)
+Add component (AddParameter): Name = "Approvals"; Value = "UL"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Category"; Value = "Terminal Blocks"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "China RoHS"; Value = "Compliant"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Color"; Value = "Black"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1Description"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-66579491.pdf?src-supplier=element14+APAC"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1URL"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-66579491.pdf?src-supplier=element14+APAC"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink2Description"; Value = "https://datasheet.octopart.com:443/PST-1.0/8-3.5-Phoenix-Contact-datasheet-8822167.pdf?src-supplier=element14+APAC"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink2URL"; Value = "https://datasheet.octopart.com:443/PST-1.0/8-3.5-Phoenix-Contact-datasheet-8822167.pdf?src-supplier=element14+APAC"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink3Description"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-175456693.pdf?src-supplier=Master+Electronics"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink3URL"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-175456693.pdf?src-supplier=Master+Electronics"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink4Description"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-154783991.pdf?src-supplier=Electro+Sonic"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink4URL"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-154783991.pdf?src-supplier=Electro+Sonic"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink5Description"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-33525158.pdf?src-supplier=MRO+Stop"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink5URL"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-33525158.pdf?src-supplier=MRO+Stop"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink6Description"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-164875081.pdf?src-supplier=Burklin+Elektronik"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink6URL"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-164875081.pdf?src-supplier=Burklin+Elektronik"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink7Description"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-54101.pdf?src-supplier=DigiKey"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink7URL"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-54101.pdf?src-supplier=DigiKey"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink8Description"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-94777.pdf?src-supplier=RS+(Formerly+Allied+Electronics)"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink8URL"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-94777.pdf?src-supplier=RS+(Formerly+Allied+Electronics)"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink9Description"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-62084791.pdf?src-supplier=RS+(Formerly+Allied+Electronics)"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink9URL"; Value = "https://datasheet.octopart.com:443/1945151-Phoenix-Contact-datasheet-62084791.pdf?src-supplier=RS+(Formerly+Allied+Electronics)"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink10Description"; Value = "http://sigma.octopart.com:80/195219851/materials_sheet/Phoenix-Contact-1945151.pdf?src-supplier=Compliance+Statements"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink10URL"; Value = "http://sigma.octopart.com:80/195219851/materials_sheet/Phoenix-Contact-1945151.pdf?src-supplier=Compliance+Statements"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Contact Plating"; Value = "Tin"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Contact Resistance"; Value = "1.8mO"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Country of Origin"; Value = "Germany"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Current"; Value = "10A"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Current Rating"; Value = "8A"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Depth"; Value = "2.8mm"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Export Control Classification Number (ECCN) Code"; Value = "EAR99"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Flammability Rating"; Value = "UL94 V-0"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Harmonized Tariff Schedule (HTS) Code"; Value = "8536.90.40.00"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Housing Color"; Value = "Black"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Introduction Date"; Value = "2002-11-26"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Lead Free"; Value = "Lead Free"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Lifecycle Status"; Value = "Production"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer"; Value = "Phoenix Contact"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer Lifecycle Status"; Value = "AVAILABLE"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer Part Number"; Value = "1945151"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Max Current Rating"; Value = "6A"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Mounting Technology"; Value = "Solder"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Number of Contacts"; Value = "8"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Number of Levels"; Value = "1"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Number of Positions"; Value = "8"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Number of Positions Per Level"; Value = "8"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Number of Rows"; Value = "1"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Orientation"; Value = "Straight"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Packaging"; Value = "Bulk"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Pins"; Value = "8"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Pitch"; Value = "3.5mm"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Pricing"; Value = "1=0.76, 10=0.76, 50=0.76, 100=0.76, 1000=0.76, 10000=0.76 (USD)"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "REACH SVHC"; Value = "Unaffected"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "RoHS"; Value = "Compliant"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Stock"; Value = "5397"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Supplier"; Value = "Mouser"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Supplier Part Number"; Value = "651-1945151"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Termination"; Value = "Solder"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Voltage"; Value = "300V"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Voltage Rating"; Value = "160V"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Weight"; Value = "869.990166mg"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Width"; Value = "24.5mm"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Wire/Cable Gauge"; Value = "20AWG"; VariantName = "[No Variations]"
+Added Pin To Net: NetName=NetJ4_1 Pin=MD2-1
+Added Pin To Net: NetName=NetJ4_2 Pin=MD2-2
+Added Pin To Net: NetName=NetJ4_3 Pin=MD2-3
+Added Pin To Net: NetName=NetJ4_4 Pin=MD2-4
+Added Pin To Net: NetName=NetJ6_1 Pin=MD2-5
+Added Pin To Net: NetName=NetJ6_2 Pin=MD2-6
+Added Pin To Net: NetName=NetJ6_3 Pin=MD2-7
+Added Pin To Net: NetName=GND Pin=MD2-8
+Added Pin To Net: NetName=VM Pin=MD2-9
+Added Pin To Net: NetName=3V3_OUT Pin=MD2-10
+Added Pin To Net: NetName=GND Pin=MD2-11
+Added Pin To Net: NetName=NetJ5_1 Pin=MD2-12
+Added Pin To Net: NetName=NetJ5_2 Pin=MD2-13
+Added Pin To Net: NetName=NetJ5_3 Pin=MD2-14
+Added Pin To Net: NetName=NetJ5_4 Pin=MD2-15
+Added Pin To Net: NetName=GND Pin=MD2-16
+Added Pin To Net: NetName=NetJ7_1 Pin=MD3-1
+Added Pin To Net: NetName=NetJ7_2 Pin=MD3-2
+Added Pin To Net: NetName=NetJ7_3 Pin=MD3-3
+Added Pin To Net: NetName=NetJ7_4 Pin=MD3-4
+Added Pin To Net: NetName=NetJ10_1 Pin=MD3-5
+Added Pin To Net: NetName=NetJ10_2 Pin=MD3-6
+Added Pin To Net: NetName=NetJ10_3 Pin=MD3-7
+Added Pin To Net: NetName=GND Pin=MD3-8
+Added Pin To Net: NetName=VM Pin=MD3-9
+Added Pin To Net: NetName=3V3_OUT Pin=MD3-10
+Added Pin To Net: NetName=GND Pin=MD3-11
+Added Pin To Net: NetName=NetJ8_1 Pin=MD3-12
+Added Pin To Net: NetName=NetJ8_2 Pin=MD3-13
+Added Pin To Net: NetName=NetJ8_3 Pin=MD3-14
+Added Pin To Net: NetName=NetJ8_4 Pin=MD3-15
+Added Pin To Net: NetName=GND Pin=MD3-16
+Added Member To Class: ClassName=3MotorDrivers Member=Component MD2 TB6612FNG
+Added Member To Class: ClassName=3MotorDrivers Member=Component MD3 TB6612FNG

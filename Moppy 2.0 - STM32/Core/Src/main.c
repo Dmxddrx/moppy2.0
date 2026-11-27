@@ -105,6 +105,7 @@ volatile uint32_t debug_general_run_count = 0;
 volatile uint32_t debug_chassis_dt_ms = 0U;
 volatile uint32_t debug_chassis_dt_max_ms = 0U;
 volatile uint32_t debug_chassis_late_count = 0U;
+volatile uint8_t vm_fault_latched = 0U; // VM EMERGENCY CUTOFF STATE
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -178,7 +179,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-  /*DEBUG_BOOT_STAGE(1);
+  DEBUG_BOOT_STAGE(1);
   HAL_Init();
 
   DEBUG_BOOT_STAGE(2);
@@ -189,6 +190,33 @@ int main(void)
 
   DEBUG_BOOT_STAGE(4);
   MX_DMA_Init();
+
+  MX_GPIO_Init();
+
+/* ------------------------------------------------------------
+ * INITIAL VM POWER SAFETY CHECK
+ *
+ * HIGH = VM unavailable / emergency cutoff active.
+ * LOW  = VM available.
+ *
+ * Check before initializing the motor subsystems.
+ * ------------------------------------------------------------ */
+if (HAL_GPIO_ReadPin(VM_FAULT_GPIO_Port, VM_FAULT_Pin)
+        == GPIO_PIN_SET)
+{
+    vm_fault_latched = 1U;
+
+    HAL_GPIO_WritePin(MD1_STBY_GPIO_Port,
+                      MD1_STBY_Pin, GPIO_PIN_RESET);
+
+    HAL_GPIO_WritePin(MD2_STBY_GPIO_Port,
+                      MD2_STBY_Pin, GPIO_PIN_RESET);
+
+    HAL_GPIO_WritePin(MD3_STBY_GPIO_Port,
+                      MD3_STBY_Pin, GPIO_PIN_RESET);
+}
+
+MX_DMA_Init();
 
   DEBUG_BOOT_STAGE(5);
   MX_TIM1_Init();
@@ -221,7 +249,7 @@ int main(void)
   MX_USART2_UART_Init();
 
   DEBUG_BOOT_STAGE(15);
-  MX_USART3_UART_Init();*/
+  MX_USART3_UART_Init();
 
   DEBUG_BOOT_STAGE(20);
   General_Init();
@@ -932,15 +960,18 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : MSD_RPM_Pin */
-  GPIO_InitStruct.Pin = MSD_RPM_Pin;
+  /*Configure GPIO pins : VM_FAULT_Pin MSD_RPM_Pin */
+  GPIO_InitStruct.Pin = VM_FAULT_Pin|MSD_RPM_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(MSD_RPM_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI0_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
@@ -948,7 +979,39 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+// EMERGENCY VM CUTOFF INTERRUPT CALLBACK
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    if (GPIO_Pin == VM_FAULT_Pin)
+    {
+        // Permanently latch the fault until deliberate re-arm.
+        vm_fault_latched = 1U;
 
+        /*
+         * Immediately disable all three motor-driver groups.
+         *
+         * Only quick GPIO operations are performed here.
+         * No delays, motor-control routines or RTOS calls.
+         */
+        HAL_GPIO_WritePin(
+            MD1_STBY_GPIO_Port,
+            MD1_STBY_Pin,
+            GPIO_PIN_RESET
+        );
+
+        HAL_GPIO_WritePin(
+            MD2_STBY_GPIO_Port,
+            MD2_STBY_Pin,
+            GPIO_PIN_RESET
+        );
+
+        HAL_GPIO_WritePin(
+            MD3_STBY_GPIO_Port,
+            MD3_STBY_Pin,
+            GPIO_PIN_RESET
+        );
+    }
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartImuTask */
@@ -992,6 +1055,7 @@ void StartWheelTask(void *argument)
     {
     	uint32_t now = osKernelGetTickCount();
 		uint32_t dt = now - previous_update;
+		uint8_t vm_fault_stop_applied = 0U;
 
 		debug_chassis_dt_ms = dt;
 
@@ -1007,8 +1071,37 @@ void StartWheelTask(void *argument)
 
 		previous_update = now;
 
-		Chassis_MotionUpdate();
-        Chassis_Update();
+		// ------------------------------------------------------------
+		// VM FAULT SAFETY GATE
+		// ------------------------------------------------------------
+		if (vm_fault_latched != 0U)
+		{
+		    if (vm_fault_stop_applied == 0U)
+		    {
+		        /*
+		         * Cancel any active turn and reset the wheel PID
+		         * targets, integrators and PWM outputs.
+		         */
+		        Chassis_CancelMotion();
+
+		        vm_fault_stop_applied = 1U;
+		    }
+
+		    // Keep the main-wheel driver disabled.
+		    HAL_GPIO_WritePin(
+		        MD1_STBY_GPIO_Port,
+		        MD1_STBY_Pin,
+		        GPIO_PIN_RESET
+		    );
+		}
+		else
+		{
+		    vm_fault_stop_applied = 0U;
+
+		    // Normal motion control.
+		    Chassis_MotionUpdate();
+		    Chassis_Update();
+		}
 
         next_wake += 20U;
         (void)osDelayUntil(next_wake);

@@ -113,6 +113,9 @@ void Error_Handler(void);
 #define MSD_PWM_GPIO_Port GPIOD
 #define M6_PWM_Pin GPIO_PIN_13
 #define M6_PWM_GPIO_Port GPIOD
+#define VM_FAULT_Pin GPIO_PIN_14
+#define VM_FAULT_GPIO_Port GPIOD
+#define VM_FAULT_EXTI_IRQn EXTI15_10_IRQn
 #define M5_PWM_Pin GPIO_PIN_15
 #define M5_PWM_GPIO_Port GPIOD
 #define ENC2_A_Pin GPIO_PIN_6

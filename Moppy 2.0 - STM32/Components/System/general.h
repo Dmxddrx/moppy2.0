@@ -17,6 +17,7 @@
 #include "side_brushes.h"
 #include "roller_brush.h"
 #include "lidar_pid.h"
+#include "vacuum_blower.h"
 
 #include "imu_manager.h"
 
@@ -26,6 +27,8 @@ extern I2C_HandleTypeDef hi2c1; // Updated to I2C1 based on your new OLED config
 
 extern volatile uint32_t debug_boot_stage;
 extern volatile uint32_t debug_general_run_count;
+// Emergency VM cutoff state defined in main.c
+extern volatile uint8_t vm_fault_latched;
 
 /* System logic functions */
 void General_Init(void);

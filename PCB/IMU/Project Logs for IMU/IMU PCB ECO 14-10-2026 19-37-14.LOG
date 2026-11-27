@@ -1,0 +1,8 @@
+Removed Pin From Net: NetName=CH A1 Pin=J3-3
+Removed Pin From Net: NetName=CH B1 Pin=J3-4
+Removed Pin From Net: NetName=CH A2 Pin=J4-3
+Removed Pin From Net: NetName=CH B2 Pin=J4-4
+Added Pin To Net: NetName=CH B1 Pin=J3-3
+Added Pin To Net: NetName=CH A1 Pin=J3-4
+Added Pin To Net: NetName=CH B2 Pin=J4-3
+Added Pin To Net: NetName=CH A2 Pin=J4-4
